@@ -20,7 +20,7 @@ const exportTargetSchema = z
 const packedManifestSchema = z
   .object({
     name: z.literal("agent-canonical"),
-    version: z.literal("0.1.4"),
+    version: z.literal("0.1.5"),
     peerDependencies: z
       .object({
         zod: z.string(),

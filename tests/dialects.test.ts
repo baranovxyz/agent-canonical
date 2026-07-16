@@ -118,13 +118,12 @@ describe("dialect golden facts", () => {
     }
   });
 
-  it("pins binary names, including the cursor → cursor-agent and cline → clite splits", () => {
+  it("pins binary names, including the cursor → cursor-agent split", () => {
     expect(DIALECTS["claude-code"].binary).toBe("claude");
     expect(DIALECTS.codex.binary).toBe("codex");
     expect(DIALECTS.opencode.binary).toBe("opencode");
     expect(DIALECTS.cursor.binary).toBe("cursor-agent");
     expect(DIALECTS.gemini.binary).toBe("gemini");
-    // The @cline/cli package installs its binary as `clite`, not `cline`.
-    expect(DIALECTS.cline.binary).toBe("clite");
+    expect(DIALECTS.cline.binary).toBe("cline");
   });
 });
