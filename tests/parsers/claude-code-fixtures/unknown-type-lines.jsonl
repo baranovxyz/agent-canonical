@@ -1,0 +1,8 @@
+{"type":"mode","mode":"normal","sessionId":"unk-types-001"}
+{"type":"ai-title","title":"My Session","sessionId":"unk-types-001"}
+{"type":"worktree-state","state":"active","sessionId":"unk-types-001"}
+{"type":"pr-link","url":"https://github.com/org/repo/pull/42","sessionId":"unk-types-001"}
+{"type":"custom-title","title":"Custom","sessionId":"unk-types-001"}
+{"type":"agent-name","name":"worker-1","sessionId":"unk-types-001"}
+{"parentUuid":null,"isSidechain":false,"type":"user","message":{"role":"user","content":"ask me something"},"uuid":"u1","timestamp":"2026-06-01T10:00:01.000Z","userType":"external","entrypoint":"cli","cwd":"/home/u/project","sessionId":"unk-types-001","version":"2.1.159","gitBranch":"main"}
+{"parentUuid":"u1","isSidechain":false,"type":"assistant","message":{"role":"assistant","model":"claude-sonnet-4","content":[{"type":"text","text":"Sure!"}],"usage":{"input_tokens":5,"output_tokens":2}},"uuid":"a1","timestamp":"2026-06-01T10:00:05.000Z","userType":"external","entrypoint":"cli","cwd":"/home/u/project","sessionId":"unk-types-001","version":"2.1.159","gitBranch":"main"}
