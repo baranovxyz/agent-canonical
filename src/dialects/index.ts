@@ -9,6 +9,7 @@ import { claudeCode } from "./claude-code.js";
 import { codex } from "./codex.js";
 import { cursor } from "./cursor.js";
 import { gemini } from "./gemini.js";
+import { goose } from "./goose.js";
 import { kilo } from "./kilo.js";
 import { opencode } from "./opencode.js";
 import { qwen } from "./qwen.js";
@@ -22,6 +23,7 @@ export const DIALECTS: Readonly<Record<CliKind, DialectDescriptor>> = {
   gemini,
   qwen,
   kilo,
+  goose,
 };
 
 export function getDialect(id: CliKind): DialectDescriptor {
@@ -31,7 +33,8 @@ export function getDialect(id: CliKind): DialectDescriptor {
 export type {
   DialectCapabilities,
   DialectDescriptor,
+  DialectProvenance,
   TranscriptStoreDescriptor,
   TurnEndSignalDescriptor,
 } from "./types.js";
-export { claudeCode, codex, cursor, gemini, kilo, opencode, qwen };
+export { claudeCode, codex, cursor, gemini, goose, kilo, opencode, qwen };

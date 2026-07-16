@@ -26,6 +26,7 @@ export default defineConfig({
     "parsers/gemini/index": "src/parsers/gemini/index.ts",
     "parsers/qwen/index": "src/parsers/qwen/index.ts",
     "parsers/kilo/index": "src/parsers/kilo/index.ts",
+    "parsers/goose/index": "src/parsers/goose/index.ts",
   },
   format: ["esm"],
   target: "node18",

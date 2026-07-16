@@ -48,4 +48,7 @@ export const qwen: DialectDescriptor = {
     permissionAwaitingOnDisk: false,
     perMessageUsage: true,
   },
+  validatedAgainst: {
+    cliVersions: ["0.19.10"],
+  },
 };

@@ -5,7 +5,7 @@
  *
  * Dialect-specific decoders and parse/read shells live behind their own
  * subpaths (`agent-canonical/parsers/<cli>`); SQLite handles stay confined to
- * the opencode and kilo entries.
+ * the opencode, kilo, and goose entries.
  */
 
 export type {

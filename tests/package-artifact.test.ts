@@ -72,6 +72,10 @@ const expectedExports: Record<string, ExportTarget> = {
     types: "./dist/parsers/kilo/index.d.ts",
     default: "./dist/parsers/kilo/index.js",
   },
+  "./parsers/goose": {
+    types: "./dist/parsers/goose/index.d.ts",
+    default: "./dist/parsers/goose/index.js",
+  },
 };
 
 let tempDir: string | undefined;
@@ -192,7 +196,7 @@ describe("published package artifact", () => {
     expect(emittedSource).not.toMatch(/from\s+["']zod\//u);
   });
 
-  it("documents the Gemini, Qwen, and Kilo parsers in the packed public docs", async () => {
+  it("documents the Gemini, Qwen, Kilo, and Goose parsers in the packed public docs", async () => {
     const [readme, changelog] = await Promise.all([
       readFile(join(extractedPackageDir, "README.md"), "utf8"),
       readFile(join(extractedPackageDir, "CHANGELOG.md"), "utf8"),
@@ -202,8 +206,10 @@ describe("published package artifact", () => {
     expect(readme).toMatch(/gemini/u);
     expect(readme).toMatch(/qwen/u);
     expect(readme).toMatch(/kilo/u);
+    expect(readme).toMatch(/goose/u);
     expect(changelog).toMatch(/Gemini\s+CLI/u);
     expect(changelog).toMatch(/Qwen\s+Code/u);
     expect(changelog).toMatch(/Kilo\s+Code/u);
+    expect(changelog).toMatch(/Goose/u);
   });
 });

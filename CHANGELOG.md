@@ -2,6 +2,20 @@
 
 Notable agent-canonical changes only. Detailed implementation notes belong in commit history.
 
+## 0.1.3 - 2026-07-16
+
+- Added a `/parsers/goose` entry for Goose (Rust; AAIF/Linux Foundation). Goose keeps a single
+  global `sessions.db` (SQLite, WAL, schema v15) with one row per turn; `content_json` is a serde
+  `{type,…}`-tagged content union (`text` / `thinking` / `toolRequest` / `toolResponse` / …) and
+  per-message usage lives in `metadata_json.usage`, not the (null) `tokens` column. Unlike the
+  opencode/kilo lineage, tool calls are cross-row — a `toolRequest` in an assistant row pairs with a
+  `toolResponse` in a later user row by `callID` — so this is a genuinely new decoder + reducer, not
+  a fork reuse.
+- Dialect descriptors gained an optional `validatedAgainst` field recording the CLI version(s) and
+  on-disk store schema version a captured session confirmed the parser against (populated for goose,
+  kilo, and qwen). Parsers stay version-agnostic and permissive; the field documents the tested
+  baseline so drift past it is visible.
+
 ## 0.1.2 - 2026-07-16
 
 - Preserve Codex collaboration lineage as direct `parentSessionId` edges, classify spawned workers

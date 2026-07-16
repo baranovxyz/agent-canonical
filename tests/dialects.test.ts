@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { DialectProvenance } from "../src/dialects/index.js";
 import { DIALECTS, getDialect } from "../src/dialects/index.js";
 import { CliKindSchema } from "../src/schemas/index.js";
 
@@ -11,6 +12,12 @@ describe("dialect registry", () => {
     expect(Object.keys(DIALECTS).sort()).toEqual(
       [...CliKindSchema.options].sort(),
     );
+  });
+
+  it("exports the validated provenance shape", () => {
+    const provenance: DialectProvenance = { cliVersions: ["1.0.0"] };
+
+    expect(provenance.cliVersions).toEqual(["1.0.0"]);
   });
 });
 
@@ -90,14 +97,15 @@ describe("dialect golden facts", () => {
     }
   });
 
-  it("pins per-message usage: cc, oc, gemini, qwen, and kilo", () => {
+  it("pins per-message usage: cc, oc, gemini, qwen, kilo, and goose", () => {
     for (const kind of CliKindSchema.options) {
       expect(DIALECTS[kind].capabilities.perMessageUsage).toBe(
         kind === "claude-code" ||
           kind === "opencode" ||
           kind === "gemini" ||
           kind === "qwen" ||
-          kind === "kilo",
+          kind === "kilo" ||
+          kind === "goose",
       );
     }
   });

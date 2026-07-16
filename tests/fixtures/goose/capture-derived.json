@@ -1,0 +1,333 @@
+{
+  "sessions": [
+    {
+      "id": "goose_fixture_1",
+      "name": "Fixture ping session",
+      "description": "",
+      "user_set_name": 0,
+      "session_type": "hidden",
+      "working_dir": "/home/u/goose-cap",
+      "created_at": null,
+      "updated_at": null,
+      "total_tokens": 5121,
+      "input_tokens": 5118,
+      "output_tokens": 3,
+      "accumulated_total_tokens": 5121,
+      "accumulated_cost": 0.00194949,
+      "provider_name": "provider-placeholder",
+      "model_config_json": "{\"model_name\": \"model-placeholder\", \"context_limit\": 1048576, \"temperature\": null, \"max_tokens\": 65536, \"toolshim\": false, \"toolshim_model\": null, \"reasoning\": false}",
+      "goose_mode": "auto",
+      "project_id": null,
+      "parent_session_id": null
+    },
+    {
+      "id": "goose_fixture_2",
+      "name": "Fixture shell session",
+      "description": "",
+      "user_set_name": 1,
+      "session_type": "user",
+      "working_dir": "/home/u/goose-cap",
+      "created_at": null,
+      "updated_at": null,
+      "total_tokens": 4535,
+      "input_tokens": 4527,
+      "output_tokens": 8,
+      "accumulated_total_tokens": 14168,
+      "accumulated_cost": 0.01101311,
+      "provider_name": "provider-placeholder",
+      "model_config_json": "{\"model_name\": \"model-placeholder\", \"context_limit\": 1048576, \"temperature\": null, \"max_tokens\": 65536, \"toolshim\": false, \"toolshim_model\": null, \"reasoning\": false}",
+      "goose_mode": "auto",
+      "project_id": null,
+      "parent_session_id": null
+    },
+    {
+      "id": "goose_fixture_3",
+      "name": "Fixture reasoning session",
+      "description": "",
+      "user_set_name": 1,
+      "session_type": "user",
+      "working_dir": "/home/u/goose-cap",
+      "created_at": null,
+      "updated_at": null,
+      "total_tokens": 6300,
+      "input_tokens": 5948,
+      "output_tokens": 352,
+      "accumulated_total_tokens": 6300,
+      "accumulated_cost": 0.0050436,
+      "provider_name": "provider-placeholder",
+      "model_config_json": "{\"model_name\": \"reasoning-model-placeholder\", \"context_limit\": 163840, \"temperature\": null, \"max_tokens\": 16000, \"toolshim\": false, \"toolshim_model\": null, \"reasoning\": true}",
+      "goose_mode": "auto",
+      "project_id": null,
+      "parent_session_id": null
+    }
+  ],
+  "messages": [
+    {
+      "id": 1,
+      "message_id": "goose_msg_1",
+      "session_id": "goose_fixture_1",
+      "role": "user",
+      "content_json": [
+        {
+          "type": "text",
+          "text": "Say exactly: GOOSE_OK and nothing else."
+        }
+      ],
+      "created_timestamp": 1700000001,
+      "tokens": null,
+      "metadata_json": {
+        "userVisible": true,
+        "agentVisible": true
+      }
+    },
+    {
+      "id": 2,
+      "message_id": "goose_msg_2",
+      "session_id": "goose_fixture_1",
+      "role": "assistant",
+      "content_json": [
+        {
+          "type": "text",
+          "text": "GOOSE_OK"
+        }
+      ],
+      "created_timestamp": 1700000002,
+      "tokens": null,
+      "metadata_json": {
+        "userVisible": true,
+        "agentVisible": true,
+        "usage": {
+          "inputTokens": 5118,
+          "outputTokens": 3,
+          "totalTokens": 5121,
+          "cacheReadTokens": 0,
+          "cost": 0,
+          "costSource": "placeholder",
+          "elapsedMs": 2619,
+          "timeToFirstTokenMs": 2588
+        }
+      }
+    },
+    {
+      "id": 8,
+      "message_id": "goose_msg_8",
+      "session_id": "goose_fixture_2",
+      "role": "user",
+      "content_json": [
+        {
+          "type": "text",
+          "text": "Reply with exactly this token and nothing else: PING_OK"
+        }
+      ],
+      "created_timestamp": 1700000008,
+      "tokens": null,
+      "metadata_json": {
+        "userVisible": true,
+        "agentVisible": true
+      }
+    },
+    {
+      "id": 9,
+      "message_id": "goose_msg_9",
+      "session_id": "goose_fixture_2",
+      "role": "assistant",
+      "content_json": [
+        {
+          "type": "text",
+          "text": "PING_OK"
+        }
+      ],
+      "created_timestamp": 1700000009,
+      "tokens": null,
+      "metadata_json": {
+        "userVisible": true,
+        "agentVisible": true,
+        "usage": {
+          "inputTokens": 5122,
+          "outputTokens": 5,
+          "totalTokens": 5127,
+          "cacheReadTokens": 0,
+          "cost": 0,
+          "costSource": "placeholder",
+          "elapsedMs": 2542,
+          "timeToFirstTokenMs": 2485
+        }
+      }
+    },
+    {
+      "id": 10,
+      "message_id": "goose_msg_10",
+      "session_id": "goose_fixture_2",
+      "role": "user",
+      "content_json": [
+        {
+          "type": "text",
+          "text": "Use the shell tool to run exactly: echo tool-ran-ok. Then reply with the exact stdout you saw."
+        }
+      ],
+      "created_timestamp": 1700000010,
+      "tokens": null,
+      "metadata_json": {
+        "userVisible": true,
+        "agentVisible": true
+      }
+    },
+    {
+      "id": 11,
+      "message_id": "goose_msg_11",
+      "session_id": "goose_fixture_2",
+      "role": "assistant",
+      "content_json": [
+        {
+          "type": "toolRequest",
+          "id": "call_fixture_shell",
+          "toolCall": {
+            "status": "success",
+            "value": {
+              "name": "shell",
+              "arguments": {
+                "command": "echo tool-ran-ok"
+              }
+            }
+          },
+          "_meta": {
+            "goose_extension": "developer"
+          }
+        }
+      ],
+      "created_timestamp": 1700000011,
+      "tokens": null,
+      "metadata_json": {
+        "userVisible": true,
+        "agentVisible": true,
+        "usage": {
+          "inputTokens": 4478,
+          "outputTokens": 28,
+          "totalTokens": 4506,
+          "cacheReadTokens": 0,
+          "cost": 0,
+          "costSource": "placeholder",
+          "elapsedMs": 971,
+          "timeToFirstTokenMs": 962
+        }
+      }
+    },
+    {
+      "id": 12,
+      "message_id": "goose_msg_12",
+      "session_id": "goose_fixture_2",
+      "role": "user",
+      "content_json": [
+        {
+          "type": "toolResponse",
+          "id": "call_fixture_shell",
+          "toolResult": {
+            "status": "success",
+            "value": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "tool-ran-ok",
+                  "annotations": {
+                    "priority": 0.0
+                  }
+                }
+              ],
+              "structuredContent": {
+                "stdout": "tool-ran-ok",
+                "stderr": "",
+                "exit_code": 0
+              },
+              "isError": false
+            }
+          }
+        }
+      ],
+      "created_timestamp": 1700000012,
+      "tokens": null,
+      "metadata_json": {
+        "userVisible": true,
+        "agentVisible": true
+      }
+    },
+    {
+      "id": 13,
+      "message_id": "goose_msg_13",
+      "session_id": "goose_fixture_2",
+      "role": "assistant",
+      "content_json": [
+        {
+          "type": "text",
+          "text": "tool-ran-ok"
+        }
+      ],
+      "created_timestamp": 1700000013,
+      "tokens": null,
+      "metadata_json": {
+        "userVisible": true,
+        "agentVisible": true,
+        "usage": {
+          "inputTokens": 4527,
+          "outputTokens": 8,
+          "totalTokens": 4535,
+          "cacheReadTokens": 0,
+          "cost": 0,
+          "costSource": "placeholder",
+          "elapsedMs": 804,
+          "timeToFirstTokenMs": 553
+        }
+      }
+    },
+    {
+      "id": 14,
+      "message_id": "goose_msg_14",
+      "session_id": "goose_fixture_3",
+      "role": "user",
+      "content_json": [
+        {
+          "type": "text",
+          "text": "Think step by step, then answer: what is 17 times 23? Show brief reasoning."
+        }
+      ],
+      "created_timestamp": 1700000014,
+      "tokens": null,
+      "metadata_json": {
+        "userVisible": true,
+        "agentVisible": true
+      }
+    },
+    {
+      "id": 15,
+      "message_id": "goose_msg_15",
+      "session_id": "goose_fixture_3",
+      "role": "assistant",
+      "content_json": [
+        {
+          "type": "thinking",
+          "thinking": "We are being asked to compute 17 times 23 and show brief reasoning.\n Since this is a straightforward arithmetic calculation, we can do it without any function calls.\n However, note that the user has instructed to \"show brief reasoning\", so we should explain our steps.\n\n Let me break it down:\n We can compute 17 * 23 by multiplying 17 by 20 and then by 3 and adding the results? \n Actually, 23 is 20 + 3, so:\n   17 * 20 = 340\n   17 * 3 = 51\n   Then 340 + 51 = 391\n\n Alternatively, we can do:\n   17 * 23 = 17 * (20 + 3) = 17*20 + 17*3 = 340 + 51 = 391.\n\n We can also verify by doing 10*23 = 230 and 7*23=161, then 230+161=391.\n\n So the answer is 391.\n\n Since we don't need to call any functions for this, we will just write a response.\n",
+          "signature": ""
+        },
+        {
+          "type": "text",
+          "text": "To compute \\(17 \\times 23\\), I'll break it down step by step:\n\n1. **Decompose 23**:  \n   \\(23 = 20 + 3\\), so:  \n   \\(17 \\times 23 = 17 \\times (20 + 3)\\).\n\n2. **Multiply separately**:  \n   - \\(17 \\times 20 = 340\\)  \n   - \\(17 \\times 3 = 51\\)\n\n3. **Sum the results**:  \n   \\(340 + 51 = 391\\)\n\n**Answer**:  \n\\(17 \\times 23 = 391\\)"
+        }
+      ],
+      "created_timestamp": 1700000015,
+      "tokens": null,
+      "metadata_json": {
+        "userVisible": true,
+        "agentVisible": true,
+        "usage": {
+          "inputTokens": 5948,
+          "outputTokens": 352,
+          "totalTokens": 6300,
+          "cacheReadTokens": 0,
+          "cost": 0,
+          "costSource": "placeholder",
+          "elapsedMs": 14131,
+          "timeToFirstTokenMs": 1791
+        }
+      }
+    }
+  ]
+}
