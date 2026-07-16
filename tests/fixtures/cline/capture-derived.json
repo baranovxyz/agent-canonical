@@ -1,0 +1,269 @@
+{
+  "sessions": [
+    {
+      "meta": {
+        "version": 1,
+        "session_id": "cline_fixture_1",
+        "source": "cli",
+        "status": "completed",
+        "interactive": true,
+        "provider": "provider-placeholder",
+        "model": "model-placeholder",
+        "cwd": "/home/u/cline-cap",
+        "workspace_root": "/home/u/cline-cap",
+        "started_at": null,
+        "ended_at": null,
+        "metadata": {
+          "provider": "provider-placeholder",
+          "model": "model-placeholder",
+          "mode": "act",
+          "title": "Read the file hello.txt and tell me the secret word it contains.",
+          "totalCost": 0.0902
+        }
+      },
+      "messages": {
+        "version": 1,
+        "updated_at": null,
+        "agent": "lead",
+        "sessionId": "cline_fixture_1",
+        "messages": [
+          {
+            "id": "msg_fix_1_1",
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "<user_input mode=\"act\">Read the file hello.txt and tell me the secret word it contains.</user_input>"
+              }
+            ],
+            "ts": 1700000000000
+          },
+          {
+            "id": "msg_fix_1_2",
+            "role": "assistant",
+            "content": [
+              {
+                "type": "thinking",
+                "thinking": "The user wants me to read a file called \"hello.txt\" and tell them the secret word. Since we are in /home/u/cline-cap, I should read the file from there. Let me use the read_files tool."
+              },
+              {
+                "type": "text",
+                "text": "I'll read the hello.txt file for you to find the secret word."
+              },
+              {
+                "type": "tool_use",
+                "id": "toolu_fixture_read",
+                "name": "read_files",
+                "input": {
+                  "files": [{ "path": "/home/u/cline-cap/hello.txt" }]
+                }
+              }
+            ],
+            "ts": 1700000001000,
+            "modelInfo": {
+              "id": "model-placeholder",
+              "provider": "provider-placeholder"
+            },
+            "metrics": {
+              "inputTokens": 5531,
+              "outputTokens": 199,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 0,
+              "cost": 0.0474375
+            }
+          },
+          {
+            "id": "msg_fix_1_3",
+            "role": "user",
+            "content": [
+              {
+                "type": "tool_result",
+                "tool_use_id": "toolu_fixture_read",
+                "content": [
+                  {
+                    "query": "/home/u/cline-cap/hello.txt",
+                    "result": "1 | The secret word is banana.\n2 | ",
+                    "success": true
+                  }
+                ]
+              }
+            ],
+            "ts": 1700000002000
+          },
+          {
+            "id": "msg_fix_1_4",
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "The secret word contained in hello.txt is **banana**."
+              }
+            ],
+            "ts": 1700000003000,
+            "modelInfo": {
+              "id": "model-placeholder",
+              "provider": "provider-placeholder"
+            },
+            "metrics": {
+              "inputTokens": 5644,
+              "outputTokens": 15,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 0,
+              "cost": 0.042771
+            }
+          }
+        ]
+      }
+    },
+    {
+      "meta": {
+        "version": 1,
+        "session_id": "cline_fixture_2",
+        "source": "cli",
+        "status": "completed",
+        "interactive": true,
+        "provider": "provider-placeholder",
+        "model": "model-placeholder",
+        "cwd": "/home/u/cline-cap",
+        "workspace_root": "/home/u/cline-cap",
+        "started_at": null,
+        "ended_at": null,
+        "metadata": {
+          "provider": "provider-placeholder",
+          "model": "model-placeholder",
+          "mode": "act",
+          "title": "Say hello in one short sentence. Do not use any tools.",
+          "totalCost": 0.0318
+        }
+      },
+      "messages": {
+        "version": 1,
+        "updated_at": null,
+        "agent": "lead",
+        "sessionId": "cline_fixture_2",
+        "messages": [
+          {
+            "id": "msg_fix_2_1",
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "<user_input mode=\"act\">Say hello in one short sentence. Do not use any tools.</user_input>"
+              }
+            ],
+            "ts": 1700000010000
+          },
+          {
+            "id": "msg_fix_2_2",
+            "role": "assistant",
+            "content": [
+              {
+                "type": "thinking",
+                "thinking": "The user is asking me to say hello in one short sentence and explicitly instructed me not to use any tools. This is a simple greeting request that doesn't require any tool usage."
+              },
+              {
+                "type": "text",
+                "text": "Hello! I'm Cline, your AI coding assistant, and I'm ready to help you with any coding tasks you need."
+              }
+            ],
+            "ts": 1700000011000,
+            "modelInfo": {
+              "id": "model-placeholder",
+              "provider": "provider-placeholder"
+            },
+            "metrics": {
+              "inputTokens": 5523,
+              "outputTokens": 84,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 0,
+              "cost": 0.0146425
+            }
+          },
+          {
+            "id": "msg_fix_2_3",
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "<user_input mode=\"act\">Run the shell command: echo hi-from-cline && ls</user_input>"
+              }
+            ],
+            "ts": 1700000012000
+          },
+          {
+            "id": "msg_fix_2_4",
+            "role": "assistant",
+            "content": [
+              {
+                "type": "thinking",
+                "thinking": "The user wants me to run a shell command. They've explicitly provided the command: \"echo hi-from-cline && ls\". I should use the run_commands tool to execute this."
+              },
+              {
+                "type": "tool_use",
+                "id": "toolu_fixture_shell",
+                "name": "run_commands",
+                "input": {
+                  "commands": ["echo hi-from-cline && ls"]
+                }
+              }
+            ],
+            "ts": 1700000013000,
+            "modelInfo": {
+              "id": "model-placeholder",
+              "provider": "provider-placeholder",
+              "family": "model-placeholder"
+            },
+            "metrics": {
+              "inputTokens": 5570,
+              "outputTokens": 111,
+              "cacheReadTokens": 5513,
+              "cacheWriteTokens": 0,
+              "cost": 0.0023501
+            }
+          },
+          {
+            "id": "msg_fix_2_5",
+            "role": "user",
+            "content": [
+              {
+                "type": "tool_result",
+                "tool_use_id": "toolu_fixture_shell",
+                "content": [
+                  {
+                    "query": "echo hi-from-cline && ls",
+                    "result": "hi-from-cline\nhello.txt\n",
+                    "success": true
+                  }
+                ]
+              }
+            ],
+            "ts": 1700000014000
+          },
+          {
+            "id": "msg_fix_2_6",
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "The command executed successfully! It printed \"hi-from-cline\" and listed hello.txt in the current directory."
+              }
+            ],
+            "ts": 1700000015000,
+            "modelInfo": {
+              "id": "model-placeholder",
+              "provider": "provider-placeholder",
+              "family": "model-placeholder"
+            },
+            "metrics": {
+              "inputTokens": 5650,
+              "outputTokens": 64,
+              "cacheReadTokens": 0,
+              "cacheWriteTokens": 0,
+              "cost": 0.014762
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

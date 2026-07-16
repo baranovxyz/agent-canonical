@@ -20,6 +20,7 @@ const exportTargetSchema = z
 const packedManifestSchema = z
   .object({
     name: z.literal("agent-canonical"),
+    version: z.literal("0.1.4"),
     peerDependencies: z
       .object({
         zod: z.string(),
@@ -75,6 +76,10 @@ const expectedExports: Record<string, ExportTarget> = {
   "./parsers/goose": {
     types: "./dist/parsers/goose/index.d.ts",
     default: "./dist/parsers/goose/index.js",
+  },
+  "./parsers/cline": {
+    types: "./dist/parsers/cline/index.d.ts",
+    default: "./dist/parsers/cline/index.js",
   },
 };
 
@@ -196,7 +201,7 @@ describe("published package artifact", () => {
     expect(emittedSource).not.toMatch(/from\s+["']zod\//u);
   });
 
-  it("documents the Gemini, Qwen, Kilo, and Goose parsers in the packed public docs", async () => {
+  it("documents the Gemini, Qwen, Kilo, Goose, and Cline parsers in the packed public docs", async () => {
     const [readme, changelog] = await Promise.all([
       readFile(join(extractedPackageDir, "README.md"), "utf8"),
       readFile(join(extractedPackageDir, "CHANGELOG.md"), "utf8"),
@@ -207,9 +212,11 @@ describe("published package artifact", () => {
     expect(readme).toMatch(/qwen/u);
     expect(readme).toMatch(/kilo/u);
     expect(readme).toMatch(/goose/u);
+    expect(readme).toMatch(/cline/u);
     expect(changelog).toMatch(/Gemini\s+CLI/u);
     expect(changelog).toMatch(/Qwen\s+Code/u);
     expect(changelog).toMatch(/Kilo\s+Code/u);
     expect(changelog).toMatch(/Goose/u);
+    expect(changelog).toMatch(/Cline/u);
   });
 });

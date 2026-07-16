@@ -35,6 +35,11 @@ describe("dialect golden facts", () => {
     expect(DIALECTS.cursor.transcriptStore.root).toBe("~/.cursor/projects");
     expect(DIALECTS.gemini.transcriptStore.root).toBe("~/.gemini/tmp");
     expect(DIALECTS.qwen.transcriptStore.root).toBe("~/.qwen/projects");
+    expect(DIALECTS.goose.transcriptStore.root).toBe(
+      "<Goose data dir>/sessions",
+    );
+    expect(DIALECTS.goose.transcriptStore.pathPattern).toBe("sessions.db");
+    expect(DIALECTS.cline.transcriptStore.root).toBe("~/.cline/data/sessions");
   });
 
   it("pins store kinds and watermark axes", () => {
@@ -42,6 +47,8 @@ describe("dialect golden facts", () => {
     expect(DIALECTS.opencode.transcriptStore.watermarkAxis).toBe(
       "row-time-created",
     );
+    // Cline keeps one JSON object per session file (not JSONL, not SQLite).
+    expect(DIALECTS.cline.transcriptStore.kind).toBe("json");
     for (const kind of [
       "claude-code",
       "codex",
@@ -97,7 +104,7 @@ describe("dialect golden facts", () => {
     }
   });
 
-  it("pins per-message usage: cc, oc, gemini, qwen, kilo, and goose", () => {
+  it("pins per-message usage: cc, oc, gemini, qwen, kilo, goose, and cline", () => {
     for (const kind of CliKindSchema.options) {
       expect(DIALECTS[kind].capabilities.perMessageUsage).toBe(
         kind === "claude-code" ||
@@ -105,16 +112,19 @@ describe("dialect golden facts", () => {
           kind === "gemini" ||
           kind === "qwen" ||
           kind === "kilo" ||
-          kind === "goose",
+          kind === "goose" ||
+          kind === "cline",
       );
     }
   });
 
-  it("pins binary names, including the cursor → cursor-agent split", () => {
+  it("pins binary names, including the cursor → cursor-agent and cline → clite splits", () => {
     expect(DIALECTS["claude-code"].binary).toBe("claude");
     expect(DIALECTS.codex.binary).toBe("codex");
     expect(DIALECTS.opencode.binary).toBe("opencode");
     expect(DIALECTS.cursor.binary).toBe("cursor-agent");
     expect(DIALECTS.gemini.binary).toBe("gemini");
+    // The @cline/cli package installs its binary as `clite`, not `cline`.
+    expect(DIALECTS.cline.binary).toBe("clite");
   });
 });

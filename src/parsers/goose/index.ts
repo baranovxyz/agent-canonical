@@ -2,9 +2,12 @@
  * Goose transcript parser — public surface.
  *
  * Goose (Rust, AAIF/Linux Foundation) stores every session in a single global
- * SQLite store at `~/.local/share/goose/sessions/sessions.db` (WAL, schema v15
- * as of Goose 1.43.0). Unlike opencode/kilo (nested `part` rows) or the JSONL
- * dialects, Goose keeps one `messages` row per turn whose `content_json` column
+ * SQLite store at `<Goose data dir>/sessions/sessions.db` (WAL, schema v15 as
+ * of Goose 1.43.0). Goose's path helper resolves that data directory from XDG
+ * on current Unix/macOS installs, `%APPDATA%\Block\goose\data` on Windows,
+ * or `<GOOSE_PATH_ROOT>/data`; older macOS installs may retain the legacy
+ * Application Support location. Unlike opencode/kilo (nested `part` rows) or
+ * the JSONL dialects, Goose keeps one `messages` row per turn whose `content_json` column
  * is a serde-serialized `Vec<MessageContent>` — a `{type,…}`-tagged union — and
  * per-message usage in `metadata_json.usage` rather than the (null) `tokens`
  * column. It is therefore a genuinely new decoder + reducer, not a fork reuse.
