@@ -6,7 +6,7 @@
  * (reduce.ts) consumes the typed records this module produces. Decoding is pure
  * (no IO), so it belongs with the decoders.
  *
- * Cline (the `@cline/cli` binary is `clite`) writes each session as a directory
+ * Cline (the `@cline/cli` binary is `cline`) writes each session as a directory
  * `~/.cline/data/sessions/<id>/` with two files:
  *   - `<id>.messages.json` — the versioned `messages-contract-v1` payload:
  *     `{ version, updated_at, agent, sessionId, messages[], system_prompt? }`.
