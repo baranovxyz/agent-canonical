@@ -1,18 +1,13 @@
 name: Publish to npm
 
-# Releases after the authenticated first publish. This workflow reads the version from package.json
-# and never bumps or commits one. It publishes that version with OIDC trusted publishing.
-# After 0.1.0 exists, configure the trusted publisher on npmjs.org: package agent-canonical ->
+# Manual release. The unprivileged prepare job builds, tests, and uses `pnpm pack`
+# so publishConfig.exports is applied to the exact candidate tarball. Only the
+# minimal publish job receives an npm-environment OIDC token; it downloads and
+# hashes that tarball and never checks out or executes repository code. Publishing
+# the already-pnpm-packed .tgz with npm is intentional and does not re-pack it.
+# Configure the trusted publisher on npmjs.org first: package agent-canonical ->
 # GitHub -> baranovxyz/agent-canonical -> .github/workflows/publish.yml
 # (+ environment "npm").
-# Bootstrap 0.1.0 is published, tagged, and released manually from main; this workflow owns every
-# later release.
-#
-# IMPORTANT: this package MUST publish via `pnpm publish`, never `npm publish`.
-# The manifest's `publishConfig.exports` swaps the exports map from TypeScript
-# source to `dist/` at pack time — pnpm applies that swap, npm 11.x does not
-# (npm would ship broken `./src` export paths). The "verify packed exports"
-# step below guards this invariant on every release.
 on:
   workflow_dispatch:
     inputs:
@@ -21,38 +16,32 @@ on:
         required: false
         type: boolean
         default: false
+      finalize-only:
+        description: "Repair tag/release metadata after npm accepted this exact commit"
+        required: false
+        type: boolean
+        default: false
 
 jobs:
-  publish:
-    # Only main in the canonical repository may execute publish-grade code.
+  prepare:
     if: ${{ github.repository == 'baranovxyz/agent-canonical' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
-    environment: npm
     permissions:
-      id-token: write   # OIDC trusted publishing (provenance once the repo is public)
       contents: read
     outputs:
       version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+      integrity: ${{ steps.pack.outputs.integrity }}
+      already_published: ${{ steps.availability.outputs.already_published }}
     steps:
-      - uses: actions/checkout@v4
-      # pnpm 11.4 fixes OIDC publishing when setup-node writes an npmrc whose
-      # NODE_AUTH_TOKEN placeholder is intentionally unset for trusted publishing.
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
         with:
           version: 11.4.0
-      # Do NOT set NODE_AUTH_TOKEN — an empty token disables OIDC; absence of a
-      # token lets the client authenticate via OIDC.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
-
-      - name: Verify trusted-publishing toolchain
-        run: |
-          node --version
-          npm --version
-          pnpm --version
-          node -e "const [a,b,c]=process.argv[1].split('.').map(Number); if (a < 11 || (a === 11 && (b < 5 || (b === 5 && c < 1)))) { throw new Error('npm >= 11.5.1 is required for OIDC trusted publishing') }" "$(npm --version)"
       - run: pnpm install --no-frozen-lockfile
       - run: pnpm build
 
@@ -70,48 +59,345 @@ jobs:
             echo "tag=latest" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Version guard (refuse if already on npm)
+      - name: Tag preflight
         run: |
-          if npm view "agent-canonical@${{ steps.version.outputs.version }}" version 2>/dev/null; then
-            echo "::error::agent-canonical@${{ steps.version.outputs.version }} is already published"
+          TAG="v${{ steps.version.outputs.version }}"
+          REMOTE_SHA=$(git ls-remote origin "refs/tags/$TAG^{}" | cut -f1)
+          if [[ -z "$REMOTE_SHA" ]]; then
+            REMOTE_SHA=$(git ls-remote origin "refs/tags/$TAG" | cut -f1)
+          fi
+          if [[ -n "$REMOTE_SHA" && "$REMOTE_SHA" != "$GITHUB_SHA" ]]; then
+            echo "::error::Tag $TAG already points at $REMOTE_SHA, expected $GITHUB_SHA"
             exit 1
           fi
 
-      - name: Verify packed exports resolve to dist (pnpm applies publishConfig.exports)
+      - name: Pack candidate and verify publishConfig exports
+        id: pack
+        env:
+          EXPECTED_VERSION: ${{ steps.version.outputs.version }}
         run: |
           mkdir pack
           pnpm pack --pack-destination pack
-          TARBALL=$(find pack -maxdepth 1 -name '*.tgz' -print -quit)
-          test -n "$TARBALL"
-          tar -xOf "$TARBALL" package/package.json > packed.json
-          node -e "
-            const m = require('./packed.json');
-            const bad = Object.entries(m.exports).filter(([k, v]) =>
-              JSON.stringify(v).includes('./src'));
-            if (bad.length) { console.error('exports still point at src:', bad); process.exit(1); }
-            if (!JSON.stringify(m.exports).includes('./dist')) { console.error('no dist exports'); process.exit(1); }
-          "
-          tar -tf "$TARBALL"
+          mapfile -t TARBALLS < <(find pack -maxdepth 1 -type f -name '*.tgz' -print)
+          if [[ "${#TARBALLS[@]}" -ne 1 ]]; then
+            echo "::error::Expected one pnpm-packed tarball, found ${#TARBALLS[@]}"
+            exit 1
+          fi
+          TARBALL="${TARBALLS[0]}"
+          tar -xOf "$TARBALL" package/package.json > "$RUNNER_TEMP/packed.json"
+          export TARBALL
+          node --input-type=module -e '
+            import { createHash } from "node:crypto";
+            import fs from "node:fs";
+            import { z } from "zod";
+            const schema = z.object({
+              name: z.literal("agent-canonical"),
+              version: z.string(),
+              exports: z.record(z.string(), z.unknown()),
+            }).passthrough();
+            const manifest = schema.parse(JSON.parse(
+              fs.readFileSync(process.argv[1], "utf8"),
+            ));
+            if (manifest.version !== process.env.EXPECTED_VERSION) {
+              throw new Error("packed manifest version differs from the release version");
+            }
+            const exportsJson = JSON.stringify(manifest.exports);
+            if (exportsJson.includes("./src")) {
+              throw new Error("packed exports still point at src");
+            }
+            if (!exportsJson.includes("./dist")) {
+              throw new Error("packed exports contain no dist targets");
+            }
+            const bytes = fs.readFileSync(process.env.TARBALL);
+            const integrity = "sha512-" + createHash("sha512")
+              .update(bytes)
+              .digest("base64");
+            fs.copyFileSync(process.env.TARBALL, "agent-canonical-release.tgz");
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, "integrity=" + integrity + "\n");
+          ' "$RUNNER_TEMP/packed.json"
+          tar -tf agent-canonical-release.tgz
 
+      - name: Version + recovery guard
+        id: availability
+        run: |
+          PACKAGE="agent-canonical@${{ steps.version.outputs.version }}"
+          FINALIZE_ONLY="${{ inputs['finalize-only'] }}"
+          if [[ "$FINALIZE_ONLY" == "true" && "${{ inputs['dry-run'] }}" == "true" ]]; then
+            echo "::error::finalize-only and dry-run cannot be combined"
+            exit 1
+          fi
+          set +e
+          npm view "$PACKAGE" version >"$RUNNER_TEMP/npm-view.out" 2>"$RUNNER_TEMP/npm-view.err"
+          VIEW_STATUS=$?
+          set -e
+          if [[ "$VIEW_STATUS" -eq 0 ]]; then
+            if [[ "${{ inputs['dry-run'] }}" == "true" ]]; then
+              echo "::error::$PACKAGE is already published; dry-run requires an unpublished version"
+              exit 1
+            fi
+            echo "already_published=true" >> "$GITHUB_OUTPUT"
+            echo "$PACKAGE exists; skipping publish and requiring exact integrity + provenance verification"
+          elif grep -q 'E404' "$RUNNER_TEMP/npm-view.err"; then
+            if [[ "$FINALIZE_ONLY" == "true" ]]; then
+              echo "::error::$PACKAGE is not published; finalize-only cannot continue"
+              exit 1
+            fi
+            echo "already_published=false" >> "$GITHUB_OUTPUT"
+            echo "$PACKAGE is available for publication"
+          else
+            cat "$RUNNER_TEMP/npm-view.err" >&2
+            echo "::error::Could not determine whether $PACKAGE already exists"
+            exit 1
+          fi
+
+      - name: Upload tested release candidate
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: agent-canonical-release-candidate
+          path: agent-canonical-release.tgz
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+
+  publish:
+    needs: prepare
+    if: >-
+      ${{
+        github.repository == 'baranovxyz/agent-canonical' &&
+        github.ref == 'refs/heads/main' &&
+        (
+          inputs['dry-run'] ||
+          (
+            !inputs['finalize-only'] &&
+            needs.prepare.outputs.already_published != 'true'
+          )
+        )
+      }}
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      actions: read
+      id-token: write
+    env:
+      ARTIFACT: ${{ github.workspace }}/release-artifact/agent-canonical-release.tgz
+      EXPECTED_INTEGRITY: ${{ needs.prepare.outputs.integrity }}
+    steps:
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      # Trusted publishing needs npm >= 11.5.1. Install the exact CLI with
+      # lifecycle scripts disabled; never set NODE_AUTH_TOKEN.
+      - run: npm install -g npm@11.17.0 --ignore-scripts
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: agent-canonical-release-candidate
+          path: release-artifact
+      - name: Verify downloaded tarball integrity
+        run: |
+          node -e '
+            const fs = require("node:fs");
+            const { createHash } = require("node:crypto");
+            const actual = "sha512-" + createHash("sha512")
+              .update(fs.readFileSync(process.env.ARTIFACT))
+              .digest("base64");
+            if (actual !== process.env.EXPECTED_INTEGRITY) {
+              throw new Error("downloaded release candidate integrity mismatch");
+            }
+          '
       - name: Publish (dry run)
-        if: ${{ inputs.dry-run }}
-        run: pnpm publish --access public --no-git-checks --tag ${{ steps.version.outputs.tag }} --dry-run
-
+        if: ${{ inputs['dry-run'] }}
+        run: npm publish "$ARTIFACT" --provenance --access public --ignore-scripts --tag ${{ needs.prepare.outputs.tag }} --dry-run
       - name: Publish
-        if: ${{ !inputs.dry-run }}
-        run: pnpm publish --access public --no-git-checks --tag ${{ steps.version.outputs.tag }}
+        if: ${{ !inputs['dry-run'] }}
+        run: npm publish "$ARTIFACT" --provenance --access public --ignore-scripts --tag ${{ needs.prepare.outputs.tag }}
+
+  verify:
+    needs: [prepare, publish]
+    if: >-
+      ${{
+        always() &&
+        !inputs['dry-run'] &&
+        github.repository == 'baranovxyz/agent-canonical' &&
+        github.ref == 'refs/heads/main' &&
+        needs.prepare.result == 'success' &&
+        (
+          (
+            needs.prepare.outputs.already_published == 'true' &&
+            needs.publish.result == 'skipped'
+          ) ||
+          (
+            needs.prepare.outputs.already_published != 'true' &&
+            needs.publish.result == 'success'
+          )
+        )
+      }}
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+    env:
+      ARTIFACT: ${{ github.workspace }}/release-artifact/agent-canonical-release.tgz
+      PACKAGE: agent-canonical@${{ needs.prepare.outputs.version }}
+      EXPECTED_INTEGRITY: ${{ needs.prepare.outputs.integrity }}
+      EXPECTED_SHA: ${{ github.sha }}
+    steps:
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: agent-canonical-release-candidate
+          path: release-artifact
+      - name: Install verifier dependency without lifecycle scripts
+        run: |
+          mkdir -p "$RUNNER_TEMP/verifier"
+          npm install --prefix "$RUNNER_TEMP/verifier" --ignore-scripts --no-save --no-package-lock zod@4.4.3
+      - name: Verify local candidate, registry integrity, and GitHub provenance
+        working-directory: ${{ runner.temp }}/verifier
+        run: |
+          LOCAL_INTEGRITY=$(node -e '
+            const fs = require("node:fs");
+            const { createHash } = require("node:crypto");
+            process.stdout.write("sha512-" + createHash("sha512")
+              .update(fs.readFileSync(process.env.ARTIFACT))
+              .digest("base64"));
+          ')
+          if [[ "$LOCAL_INTEGRITY" != "$EXPECTED_INTEGRITY" ]]; then
+            echo "::error::downloaded release candidate integrity mismatch"
+            exit 1
+          fi
+
+          PUBLISHED_INTEGRITY=""
+          ATTESTATION_URL=""
+          for ATTEMPT in 1 2 3 4 5 6; do
+            set +e
+            PUBLISHED_INTEGRITY=$(npm view "$PACKAGE" dist.integrity 2>"$RUNNER_TEMP/integrity.err")
+            INTEGRITY_STATUS=$?
+            ATTESTATION_URL=$(npm view "$PACKAGE" dist.attestations.url 2>"$RUNNER_TEMP/attestation.err")
+            ATTESTATION_STATUS=$?
+            set -e
+            if [[ "$INTEGRITY_STATUS" -eq 0 && "$ATTESTATION_STATUS" -eq 0 && \
+                  -n "$PUBLISHED_INTEGRITY" && -n "$ATTESTATION_URL" ]]; then
+              break
+            fi
+            if [[ "$ATTEMPT" -eq 6 ]]; then
+              cat "$RUNNER_TEMP/integrity.err" "$RUNNER_TEMP/attestation.err" >&2
+              echo "::error::$PACKAGE registry metadata did not become available after 6 attempts"
+              exit 1
+            fi
+            sleep 5
+          done
+          if [[ "$PUBLISHED_INTEGRITY" != "$EXPECTED_INTEGRITY" ]]; then
+            echo "::error::$PACKAGE integrity does not match the tested release candidate"
+            exit 1
+          fi
+          export ATTESTATION_URL
+          node --input-type=module -e '
+            import { z } from "zod";
+            const documentSchema = z.object({
+              attestations: z.array(z.object({
+                predicateType: z.string(),
+                bundle: z.object({
+                  dsseEnvelope: z.object({ payload: z.string() }).passthrough(),
+                }).passthrough(),
+              }).passthrough()),
+            }).passthrough();
+            const statementSchema = z.object({
+              subject: z.array(z.object({
+                name: z.string(),
+                digest: z.object({ sha512: z.string() }).passthrough(),
+              }).passthrough()),
+              predicate: z.object({
+                buildDefinition: z.object({
+                  externalParameters: z.object({
+                    workflow: z.object({
+                      ref: z.string(),
+                      repository: z.string(),
+                      path: z.string(),
+                    }).passthrough(),
+                  }).passthrough(),
+                  resolvedDependencies: z.array(z.object({
+                    digest: z.object({ gitCommit: z.string() }).passthrough(),
+                  }).passthrough()),
+                }).passthrough(),
+              }).passthrough(),
+            }).passthrough();
+            let document;
+            for (let attempt = 1; attempt <= 6; attempt++) {
+              try {
+                const response = await fetch(process.env.ATTESTATION_URL);
+                if (response.ok) {
+                  const parsed = documentSchema.safeParse(await response.json());
+                  if (parsed.success && parsed.data.attestations.some(
+                    (entry) => entry.predicateType === "https://slsa.dev/provenance/v1",
+                  )) {
+                    document = parsed.data;
+                    break;
+                  }
+                }
+              } catch {
+                // Bounded retry below; the final attempt remains fail closed.
+              }
+              if (attempt < 6) {
+                await new Promise((resolve) => setTimeout(resolve, 5000));
+              }
+            }
+            if (!document) throw new Error("SLSA provenance attestation was unavailable after 6 attempts");
+            const attestation = document.attestations.find(
+              (entry) => entry.predicateType === "https://slsa.dev/provenance/v1",
+            );
+            if (!attestation) throw new Error("SLSA provenance attestation is missing");
+            const statement = statementSchema.parse(JSON.parse(
+              Buffer.from(attestation.bundle.dsseEnvelope.payload, "base64").toString("utf8"),
+            ));
+            const expectedIntegrity = process.env.EXPECTED_INTEGRITY;
+            if (!expectedIntegrity?.startsWith("sha512-")) {
+              throw new Error("tested tarball has no sha512 integrity");
+            }
+            const expectedDigest = Buffer.from(
+              expectedIntegrity.slice("sha512-".length),
+              "base64",
+            ).toString("hex");
+            const subject = statement.subject.find(
+              (entry) => entry.name === "pkg:npm/" + process.env.PACKAGE,
+            );
+            if (subject?.digest.sha512 !== expectedDigest) {
+              throw new Error("provenance subject does not match the tested tarball");
+            }
+            const workflow = statement.predicate.buildDefinition.externalParameters.workflow;
+            if (workflow.repository !== "https://github.com/baranovxyz/agent-canonical" ||
+                workflow.ref !== "refs/heads/main" ||
+                workflow.path !== ".github/workflows/publish.yml") {
+              throw new Error("provenance was produced by an unexpected workflow");
+            }
+            const commits = statement.predicate.buildDefinition.resolvedDependencies
+              .map((entry) => entry.digest.gitCommit);
+            if (!commits.includes(process.env.EXPECTED_SHA)) {
+              throw new Error("provenance does not resolve to the release commit");
+            }
+          '
 
   tag-and-release:
-    needs: publish
-    if: ${{ !inputs.dry-run && github.repository == 'baranovxyz/agent-canonical' && github.ref == 'refs/heads/main' }}
+    needs: [prepare, verify]
+    if: >-
+      ${{
+        always() &&
+        !inputs['dry-run'] &&
+        github.repository == 'baranovxyz/agent-canonical' &&
+        github.ref == 'refs/heads/main' &&
+        needs.prepare.result == 'success' &&
+        needs.verify.result == 'success'
+      }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - name: Create + push tag
         run: |
-          TAG="v${{ needs.publish.outputs.version }}"
+          TAG="v${{ needs.prepare.outputs.version }}"
           REMOTE_SHA=$(git ls-remote origin "refs/tags/$TAG^{}" | cut -f1)
           if [[ -z "$REMOTE_SHA" ]]; then
             REMOTE_SHA=$(git ls-remote origin "refs/tags/$TAG" | cut -f1)
@@ -129,7 +415,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="v${{ needs.publish.outputs.version }}"
+          TAG="v${{ needs.prepare.outputs.version }}"
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "Release already exists for $TAG"
           else

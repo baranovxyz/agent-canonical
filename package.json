@@ -8,7 +8,7 @@
     "zod": "4.4.3"
   },
   "name": "agent-canonical",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Canonical session/transcript schemas and per-CLI transcript-format knowledge for AI coding agents (claude-code, codex, opencode, cursor, gemini, qwen, kilo)",
   "keywords": [
     "coding-agent",

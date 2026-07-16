@@ -30,6 +30,28 @@ function makeTempRollout(lines: object[]): {
   return { file, cleanup: () => rmSync(dir, { recursive: true, force: true }) };
 }
 
+function makeMetadataRollout(payload: Record<string, unknown>): {
+  file: string;
+  cleanup: () => void;
+} {
+  return makeTempRollout([
+    {
+      timestamp: "2026-07-16T09:00:00.000Z",
+      type: "session_meta",
+      payload,
+    },
+    {
+      timestamp: "2026-07-16T09:00:01.000Z",
+      type: "response_item",
+      payload: {
+        type: "message",
+        role: "user",
+        content: [{ type: "input_text", text: "delegated task" }],
+      },
+    },
+  ]);
+}
+
 // ---------------------------------------------------------------------------
 // Core parser behavior
 // ---------------------------------------------------------------------------
@@ -46,7 +68,7 @@ describe("codex parser — core behavior", () => {
     expect(s.externalId).toBe("codex-fix-001");
     expect(s.projectPath).toBe("/home/u/repo");
     expect(s.model).toBe("gpt-5.5");
-    expect(s.agentType).toBe("codex-tui");
+    expect(s.agentType).toBeUndefined();
     // Title comes from first non-thinking message (the user message)
     expect(s.title).toBe("please list the top-level files");
   });
@@ -310,6 +332,221 @@ describe("codex parser — core behavior", () => {
     // call_C gets its exitCode from the flattened array output
     expect(callC?.exitCode).toBe(1);
     expect(callC?.outputPreview).toContain("No such file");
+  });
+});
+
+describe("codex parser — collaboration lineage", () => {
+  it("leaves user threads untyped and ignores fork-only lineage", async () => {
+    const { file, cleanup } = makeMetadataRollout({
+      id: "root-session",
+      cwd: "/tmp/repo",
+      originator: "codex-tui",
+      source: "cli",
+      thread_source: "user",
+      forked_from_id: "another-user-thread",
+    });
+    try {
+      const result = await parseSessionFile(file);
+      expect(result.success).toBe(true);
+      if (!result.success) return;
+
+      expect(result.data.parentSessionId).toBeUndefined();
+      expect(result.data.agentType).toBeUndefined();
+    } finally {
+      cleanup();
+    }
+  });
+
+  it("maps v1 role-based workers to their direct parent", async () => {
+    const { file, cleanup } = makeMetadataRollout({
+      id: "child-v1",
+      cwd: "/tmp/repo",
+      originator: "codex-tui",
+      source: {
+        subagent: {
+          thread_spawn: {
+            parent_thread_id: "parent-v1",
+            depth: 1,
+            agent_path: null,
+            agent_nickname: "Boole",
+            agent_role: "explorer",
+          },
+        },
+      },
+      thread_source: "subagent",
+      parent_thread_id: "parent-v1",
+      forked_from_id: null,
+      agent_path: null,
+      multi_agent_version: "v1",
+    });
+    try {
+      const result = await parseSessionFile(file);
+      expect(result.success).toBe(true);
+      if (!result.success) return;
+
+      expect(result.data.parentSessionId).toBe("cx--parent-v1");
+      expect(result.data.agentType).toBe("explorer");
+    } finally {
+      cleanup();
+    }
+  });
+
+  it("maps v2 path-named workers without changing identity or raw events", async () => {
+    const { file, cleanup } = makeMetadataRollout({
+      id: "child-v2",
+      session_id: "root-session",
+      cwd: "/tmp/repo",
+      originator: "codex-tui",
+      source: {
+        subagent: {
+          thread_spawn: {
+            parent_thread_id: "root-session",
+            depth: 1,
+            agent_path: "/root/code_audit",
+            agent_nickname: "Newton",
+            agent_role: null,
+          },
+        },
+      },
+      thread_source: "subagent",
+      parent_thread_id: "root-session",
+      forked_from_id: "root-session",
+      agent_path: "/root/code_audit",
+      agent_nickname: "Newton",
+      multi_agent_version: "v2",
+    });
+    try {
+      const result = await parseSessionFile(file);
+      expect(result.success).toBe(true);
+      if (!result.success) return;
+
+      const session = result.data;
+      expect(session.id).toBe("cx--child-v2");
+      expect(session.externalId).toBe("child-v2");
+      expect(session.parentSessionId).toBe("cx--root-session");
+      expect(session.agentType).toBe("/root/code_audit");
+      expect(session.transcript.contentHash).toMatch(/^[0-9a-f]{64}$/);
+      expect(session.transcript.rawEvents).toHaveLength(2);
+      expect(session.transcript.rawEvents?.[0]?.rawJson).toContain(
+        '"agent_path":"/root/code_audit"',
+      );
+    } finally {
+      cleanup();
+    }
+  });
+
+  it("links nested workers to the immediate worker rather than the root", async () => {
+    const { file, cleanup } = makeMetadataRollout({
+      id: "nested-child",
+      session_id: "root-session",
+      source: {
+        subagent: {
+          thread_spawn: {
+            parent_thread_id: "direct-worker",
+            depth: 2,
+            agent_path: "/root/parent/nested",
+            agent_role: null,
+          },
+        },
+      },
+      thread_source: "subagent",
+      parent_thread_id: "direct-worker",
+      forked_from_id: "direct-worker",
+      agent_path: "/root/parent/nested",
+      multi_agent_version: "v2",
+    });
+    try {
+      const result = await parseSessionFile(file);
+      expect(result.success).toBe(true);
+      if (!result.success) return;
+
+      expect(result.data.parentSessionId).toBe("cx--direct-worker");
+      expect(result.data.parentSessionId).not.toBe("cx--root-session");
+      expect(result.data.agentType).toBe("/root/parent/nested");
+    } finally {
+      cleanup();
+    }
+  });
+
+  it("classifies Guardian reviews as direct child sessions", async () => {
+    const { file, cleanup } = makeMetadataRollout({
+      id: "guardian-review",
+      session_id: "root-session",
+      source: { subagent: { other: "guardian" } },
+      thread_source: "subagent",
+      parent_thread_id: "direct-worker",
+      forked_from_id: null,
+      multi_agent_version: "disabled",
+    });
+    try {
+      const result = await parseSessionFile(file);
+      expect(result.success).toBe(true);
+      if (!result.success) return;
+
+      expect(result.data.parentSessionId).toBe("cx--direct-worker");
+      expect(result.data.agentType).toBe("guardian");
+    } finally {
+      cleanup();
+    }
+  });
+
+  it("uses forked_from_id only as a guarded subagent fallback", async () => {
+    const { file, cleanup } = makeMetadataRollout({
+      id: "fallback-child",
+      source: {
+        subagent: {
+          thread_spawn: {
+            depth: 1,
+            agent_role: "worker",
+          },
+        },
+      },
+      thread_source: "subagent",
+      forked_from_id: "cx--fallback-parent",
+      multi_agent_version: "v1",
+    });
+    try {
+      const result = await parseSessionFile(file);
+      expect(result.success).toBe(true);
+      if (!result.success) return;
+
+      expect(result.data.parentSessionId).toBe("cx--fallback-parent");
+      expect(result.data.agentType).toBe("worker");
+    } finally {
+      cleanup();
+    }
+  });
+
+  it("warns nonfatally when Codex parent metadata conflicts", async () => {
+    const { file, cleanup } = makeMetadataRollout({
+      id: "conflicting-child",
+      source: {
+        subagent: {
+          thread_spawn: {
+            parent_thread_id: "nested-parent",
+            depth: 1,
+            agent_path: "/root/conflict_test",
+          },
+        },
+      },
+      thread_source: "subagent",
+      parent_thread_id: "top-level-parent",
+      forked_from_id: "fork-parent",
+      multi_agent_version: "v2",
+    });
+    try {
+      const result = await parseSessionFile(file);
+      expect(result.success).toBe(true);
+      if (!result.success) return;
+
+      expect(result.data.parentSessionId).toBe("cx--nested-parent");
+      expect(result.issues).toHaveLength(2);
+      expect(result.issues[0]?.severity).toBe("warning");
+      expect(result.issues[0]?.message).toContain("conflicting Codex parent");
+      expect(result.issues[1]?.message).toContain("conflicting Codex fork");
+    } finally {
+      cleanup();
+    }
   });
 });
 
