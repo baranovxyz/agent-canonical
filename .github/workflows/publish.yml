@@ -1,0 +1,139 @@
+name: Publish to npm
+
+# Releases after the authenticated first publish. This workflow reads the version from package.json
+# and never bumps or commits one. It publishes that version with OIDC trusted publishing.
+# After 0.1.0 exists, configure the trusted publisher on npmjs.org: package agent-canonical ->
+# GitHub -> baranovxyz/agent-canonical -> .github/workflows/publish.yml
+# (+ environment "npm").
+# Bootstrap 0.1.0 is published, tagged, and released manually from main; this workflow owns every
+# later release.
+#
+# IMPORTANT: this package MUST publish via `pnpm publish`, never `npm publish`.
+# The manifest's `publishConfig.exports` swaps the exports map from TypeScript
+# source to `dist/` at pack time — pnpm applies that swap, npm 11.x does not
+# (npm would ship broken `./src` export paths). The "verify packed exports"
+# step below guards this invariant on every release.
+on:
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: "Dry run (skip the actual publish)"
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  publish:
+    # Only main in the canonical repository may execute publish-grade code.
+    if: ${{ github.repository == 'baranovxyz/agent-canonical' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      id-token: write   # OIDC trusted publishing (provenance once the repo is public)
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      # pnpm 11.4 fixes OIDC publishing when setup-node writes an npmrc whose
+      # NODE_AUTH_TOKEN placeholder is intentionally unset for trusted publishing.
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.4.0
+      # Do NOT set NODE_AUTH_TOKEN — an empty token disables OIDC; absence of a
+      # token lets the client authenticate via OIDC.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+
+      - name: Verify trusted-publishing toolchain
+        run: |
+          node --version
+          npm --version
+          pnpm --version
+          node -e "const [a,b,c]=process.argv[1].split('.').map(Number); if (a < 11 || (a === 11 && (b < 5 || (b === 5 && c < 1)))) { throw new Error('npm >= 11.5.1 is required for OIDC trusted publishing') }" "$(npm --version)"
+      - run: pnpm install --no-frozen-lockfile
+      - run: pnpm build
+
+      - name: Verify packed artifact contract
+        run: pnpm test:artifact
+
+      - name: Resolve version + dist-tag
+        id: version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if [[ "$VERSION" == *-* ]]; then
+            echo "tag=next" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=latest" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Version guard (refuse if already on npm)
+        run: |
+          if npm view "agent-canonical@${{ steps.version.outputs.version }}" version 2>/dev/null; then
+            echo "::error::agent-canonical@${{ steps.version.outputs.version }} is already published"
+            exit 1
+          fi
+
+      - name: Verify packed exports resolve to dist (pnpm applies publishConfig.exports)
+        run: |
+          mkdir pack
+          pnpm pack --pack-destination pack
+          TARBALL=$(find pack -maxdepth 1 -name '*.tgz' -print -quit)
+          test -n "$TARBALL"
+          tar -xOf "$TARBALL" package/package.json > packed.json
+          node -e "
+            const m = require('./packed.json');
+            const bad = Object.entries(m.exports).filter(([k, v]) =>
+              JSON.stringify(v).includes('./src'));
+            if (bad.length) { console.error('exports still point at src:', bad); process.exit(1); }
+            if (!JSON.stringify(m.exports).includes('./dist')) { console.error('no dist exports'); process.exit(1); }
+          "
+          tar -tf "$TARBALL"
+
+      - name: Publish (dry run)
+        if: ${{ inputs.dry-run }}
+        run: pnpm publish --access public --no-git-checks --tag ${{ steps.version.outputs.tag }} --dry-run
+
+      - name: Publish
+        if: ${{ !inputs.dry-run }}
+        run: pnpm publish --access public --no-git-checks --tag ${{ steps.version.outputs.tag }}
+
+  tag-and-release:
+    needs: publish
+    if: ${{ !inputs.dry-run && github.repository == 'baranovxyz/agent-canonical' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create + push tag
+        run: |
+          TAG="v${{ needs.publish.outputs.version }}"
+          REMOTE_SHA=$(git ls-remote origin "refs/tags/$TAG^{}" | cut -f1)
+          if [[ -z "$REMOTE_SHA" ]]; then
+            REMOTE_SHA=$(git ls-remote origin "refs/tags/$TAG" | cut -f1)
+          fi
+          if [[ -n "$REMOTE_SHA" && "$REMOTE_SHA" != "$GITHUB_SHA" ]]; then
+            echo "::error::Tag $TAG already points at $REMOTE_SHA, expected $GITHUB_SHA"
+            exit 1
+          elif [[ -n "$REMOTE_SHA" ]]; then
+            echo "Tag $TAG already points at the published commit"
+          else
+            git tag "$TAG" "$GITHUB_SHA"
+            git push origin "refs/tags/$TAG"
+          fi
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v${{ needs.publish.outputs.version }}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release already exists for $TAG"
+          else
+            PRERELEASE=""
+            if [[ "$TAG" == *-* ]]; then PRERELEASE="--prerelease"; fi
+            gh release create "$TAG" --generate-notes --title "$TAG" $PRERELEASE
+          fi

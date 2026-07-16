@@ -1,0 +1,788 @@
+{
+  "sessions": [
+    {
+      "id": "ses_fixture0001",
+      "project_id": "project-placeholder",
+      "parent_id": null,
+      "slug": "session-placeholder-1",
+      "directory": "/home/u/kilo-fixture",
+      "title": "Fixture metadata session",
+      "version": "7.4.9",
+      "share_url": null,
+      "summary_additions": 0,
+      "summary_deletions": 0,
+      "summary_files": 0,
+      "summary_diffs": null,
+      "revert": null,
+      "permission": "[]",
+      "time_created": 1000,
+      "time_updated": 1900,
+      "time_compacting": null,
+      "time_archived": null,
+      "workspace_id": null,
+      "path": "",
+      "agent": "code",
+      "model": "{\"id\":\"model-placeholder\",\"providerID\":\"provider-placeholder\",\"variant\":\"fixture\"}",
+      "cost": 0,
+      "tokens_input": 60,
+      "tokens_output": 6,
+      "tokens_reasoning": 0,
+      "tokens_cache_read": 0,
+      "tokens_cache_write": 0,
+      "metadata": null
+    },
+    {
+      "id": "ses_fixture0002",
+      "project_id": "project-placeholder",
+      "parent_id": null,
+      "slug": "session-placeholder-2",
+      "directory": "/home/u/kilo-fixture",
+      "title": "Fixture note session",
+      "version": "7.4.9",
+      "share_url": null,
+      "summary_additions": 1,
+      "summary_deletions": 0,
+      "summary_files": 1,
+      "summary_diffs": null,
+      "revert": null,
+      "permission": "[]",
+      "time_created": 2000,
+      "time_updated": 2900,
+      "time_compacting": null,
+      "time_archived": null,
+      "workspace_id": null,
+      "path": "",
+      "agent": "code",
+      "model": "{\"id\":\"model-placeholder\",\"providerID\":\"provider-placeholder\",\"variant\":\"fixture\"}",
+      "cost": 0,
+      "tokens_input": 260,
+      "tokens_output": 26,
+      "tokens_reasoning": 0,
+      "tokens_cache_read": 0,
+      "tokens_cache_write": 0,
+      "metadata": null
+    }
+  ],
+  "messages": [
+    {
+      "id": "msg_fixture0001",
+      "session_id": "ses_fixture0001",
+      "time_created": 10000,
+      "time_updated": 10500,
+      "data": {
+        "role": "user",
+        "time": {
+          "created": 10000
+        },
+        "tools": {},
+        "agent": "code",
+        "model": {
+          "providerID": "provider-placeholder",
+          "modelID": "model-placeholder"
+        },
+        "summary": {
+          "diffs": []
+        }
+      }
+    },
+    {
+      "id": "msg_fixture0002",
+      "session_id": "ses_fixture0001",
+      "time_created": 11000,
+      "time_updated": 11500,
+      "data": {
+        "parentID": "msg_fixture0001",
+        "role": "assistant",
+        "mode": "code",
+        "agent": "code",
+        "path": {
+          "cwd": "/home/u/kilo-fixture",
+          "root": "/home/u/kilo-fixture"
+        },
+        "cost": 0,
+        "tokens": {
+          "total": 11,
+          "input": 10,
+          "output": 1,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "modelID": "model-placeholder",
+        "providerID": "provider-placeholder",
+        "time": {
+          "created": 11000,
+          "completed": 11400
+        },
+        "finish": "tool-calls"
+      }
+    },
+    {
+      "id": "msg_fixture0003",
+      "session_id": "ses_fixture0001",
+      "time_created": 12000,
+      "time_updated": 12500,
+      "data": {
+        "parentID": "msg_fixture0001",
+        "role": "assistant",
+        "mode": "code",
+        "agent": "code",
+        "path": {
+          "cwd": "/home/u/kilo-fixture",
+          "root": "/home/u/kilo-fixture"
+        },
+        "cost": 0,
+        "tokens": {
+          "total": 22,
+          "input": 20,
+          "output": 2,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "modelID": "model-placeholder",
+        "providerID": "provider-placeholder",
+        "time": {
+          "created": 12000,
+          "completed": 12400
+        },
+        "finish": "tool-calls"
+      }
+    },
+    {
+      "id": "msg_fixture0004",
+      "session_id": "ses_fixture0001",
+      "time_created": 13000,
+      "time_updated": 13500,
+      "data": {
+        "parentID": "msg_fixture0001",
+        "role": "assistant",
+        "mode": "code",
+        "agent": "code",
+        "path": {
+          "cwd": "/home/u/kilo-fixture",
+          "root": "/home/u/kilo-fixture"
+        },
+        "cost": 0,
+        "tokens": {
+          "total": 33,
+          "input": 30,
+          "output": 3,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "modelID": "model-placeholder",
+        "providerID": "provider-placeholder",
+        "time": {
+          "created": 13000,
+          "completed": 13400
+        },
+        "finish": "stop"
+      }
+    },
+    {
+      "id": "msg_fixture0005",
+      "session_id": "ses_fixture0002",
+      "time_created": 14000,
+      "time_updated": 14500,
+      "data": {
+        "role": "user",
+        "time": {
+          "created": 14000
+        },
+        "tools": {},
+        "agent": "code",
+        "model": {
+          "providerID": "provider-placeholder",
+          "modelID": "model-placeholder"
+        },
+        "summary": {
+          "diffs": [
+            {
+              "file": "notes.txt",
+              "patch": "diff --git a/notes.txt b/notes.txt\nnew file mode 100644\n--- /dev/null\n+++ b/notes.txt\n@@ -0,0 +1 @@\n+fixture-note\n",
+              "additions": 1,
+              "deletions": 0,
+              "status": "added"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "msg_fixture0006",
+      "session_id": "ses_fixture0002",
+      "time_created": 15000,
+      "time_updated": 15500,
+      "data": {
+        "parentID": "msg_fixture0005",
+        "role": "assistant",
+        "mode": "code",
+        "agent": "code",
+        "path": {
+          "cwd": "/home/u/kilo-fixture",
+          "root": "/home/u/kilo-fixture"
+        },
+        "cost": 0,
+        "tokens": {
+          "total": 55,
+          "input": 50,
+          "output": 5,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "modelID": "model-placeholder",
+        "providerID": "provider-placeholder",
+        "time": {
+          "created": 15000,
+          "completed": 15400
+        },
+        "finish": "tool-calls"
+      }
+    },
+    {
+      "id": "msg_fixture0007",
+      "session_id": "ses_fixture0002",
+      "time_created": 16000,
+      "time_updated": 16500,
+      "data": {
+        "parentID": "msg_fixture0005",
+        "role": "assistant",
+        "mode": "code",
+        "agent": "code",
+        "path": {
+          "cwd": "/home/u/kilo-fixture",
+          "root": "/home/u/kilo-fixture"
+        },
+        "cost": 0,
+        "tokens": {
+          "total": 66,
+          "input": 60,
+          "output": 6,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "modelID": "model-placeholder",
+        "providerID": "provider-placeholder",
+        "time": {
+          "created": 16000,
+          "completed": 16400
+        },
+        "finish": "tool-calls"
+      }
+    },
+    {
+      "id": "msg_fixture0008",
+      "session_id": "ses_fixture0002",
+      "time_created": 17000,
+      "time_updated": 17500,
+      "data": {
+        "parentID": "msg_fixture0005",
+        "role": "assistant",
+        "mode": "code",
+        "agent": "code",
+        "path": {
+          "cwd": "/home/u/kilo-fixture",
+          "root": "/home/u/kilo-fixture"
+        },
+        "cost": 0,
+        "tokens": {
+          "total": 77,
+          "input": 70,
+          "output": 7,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "modelID": "model-placeholder",
+        "providerID": "provider-placeholder",
+        "time": {
+          "created": 17000,
+          "completed": 17400
+        },
+        "finish": "tool-calls"
+      }
+    },
+    {
+      "id": "msg_fixture0009",
+      "session_id": "ses_fixture0002",
+      "time_created": 18000,
+      "time_updated": 18500,
+      "data": {
+        "parentID": "msg_fixture0005",
+        "role": "assistant",
+        "mode": "code",
+        "agent": "code",
+        "path": {
+          "cwd": "/home/u/kilo-fixture",
+          "root": "/home/u/kilo-fixture"
+        },
+        "cost": 0,
+        "tokens": {
+          "total": 88,
+          "input": 80,
+          "output": 8,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "modelID": "model-placeholder",
+        "providerID": "provider-placeholder",
+        "time": {
+          "created": 18000,
+          "completed": 18400
+        },
+        "finish": "stop"
+      }
+    }
+  ],
+  "parts": [
+    {
+      "id": "prt_fixture0001",
+      "message_id": "msg_fixture0001",
+      "session_id": "ses_fixture0001",
+      "time_created": 20000,
+      "data": {
+        "type": "text",
+        "text": "Read fixture metadata and run two synthetic tool steps."
+      }
+    },
+    {
+      "id": "prt_fixture0002",
+      "message_id": "msg_fixture0002",
+      "session_id": "ses_fixture0001",
+      "time_created": 21000,
+      "data": {
+        "snapshot": "snapshot-before-placeholder",
+        "type": "step-start"
+      }
+    },
+    {
+      "id": "prt_fixture0003",
+      "message_id": "msg_fixture0002",
+      "session_id": "ses_fixture0001",
+      "time_created": 22000,
+      "data": {
+        "type": "tool",
+        "tool": "read",
+        "callID": "call-placeholder-01",
+        "state": {
+          "status": "completed",
+          "input": {
+            "filePath": "/home/u/kilo-fixture/package.json"
+          },
+          "output": "<path>/home/u/kilo-fixture/package.json</path>\n<type>file</type>\n<content>\n1: {\"name\":\"kilo-fixture\",\"version\":\"0.0.0\"}\n</content>",
+          "metadata": {
+            "fixture": true
+          },
+          "title": "fixture-package.json",
+          "time": {
+            "start": 22100,
+            "end": 22200
+          }
+        },
+        "metadata": {
+          "provider-placeholder": {}
+        }
+      }
+    },
+    {
+      "id": "prt_fixture0004",
+      "message_id": "msg_fixture0002",
+      "session_id": "ses_fixture0001",
+      "time_created": 23000,
+      "data": {
+        "reason": "tool-calls",
+        "snapshot": "snapshot-before-placeholder",
+        "type": "step-finish",
+        "tokens": {
+          "total": 5,
+          "input": 4,
+          "output": 1,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "cost": 0
+      }
+    },
+    {
+      "id": "prt_fixture0005",
+      "message_id": "msg_fixture0003",
+      "session_id": "ses_fixture0001",
+      "time_created": 24000,
+      "data": {
+        "snapshot": "snapshot-before-placeholder",
+        "type": "step-start"
+      }
+    },
+    {
+      "id": "prt_fixture0006",
+      "message_id": "msg_fixture0003",
+      "session_id": "ses_fixture0001",
+      "time_created": 25000,
+      "data": {
+        "type": "tool",
+        "tool": "bash",
+        "callID": "call-placeholder-02",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "printf fixture-output-5"
+          },
+          "output": "fixture-output-5",
+          "metadata": {
+            "fixture": true
+          },
+          "title": "Synthetic command",
+          "time": {
+            "start": 25100,
+            "end": 25200
+          }
+        },
+        "metadata": {
+          "provider-placeholder": {}
+        }
+      }
+    },
+    {
+      "id": "prt_fixture0007",
+      "message_id": "msg_fixture0003",
+      "session_id": "ses_fixture0001",
+      "time_created": 26000,
+      "data": {
+        "reason": "tool-calls",
+        "snapshot": "snapshot-before-placeholder",
+        "type": "step-finish",
+        "tokens": {
+          "total": 8,
+          "input": 7,
+          "output": 1,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "cost": 0
+      }
+    },
+    {
+      "id": "prt_fixture0008",
+      "message_id": "msg_fixture0004",
+      "session_id": "ses_fixture0001",
+      "time_created": 27000,
+      "data": {
+        "snapshot": "snapshot-before-placeholder",
+        "type": "step-start"
+      }
+    },
+    {
+      "id": "prt_fixture0009",
+      "message_id": "msg_fixture0004",
+      "session_id": "ses_fixture0001",
+      "time_created": 28000,
+      "data": {
+        "type": "text",
+        "text": "The fixture package is kilo-fixture version 0.0.0.",
+        "time": {
+          "start": 1000,
+          "end": 1000
+        }
+      }
+    },
+    {
+      "id": "prt_fixture0010",
+      "message_id": "msg_fixture0004",
+      "session_id": "ses_fixture0001",
+      "time_created": 29000,
+      "data": {
+        "reason": "stop",
+        "snapshot": "snapshot-before-placeholder",
+        "type": "step-finish",
+        "tokens": {
+          "total": 11,
+          "input": 10,
+          "output": 1,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "cost": 0
+      }
+    },
+    {
+      "id": "prt_fixture0011",
+      "message_id": "msg_fixture0005",
+      "session_id": "ses_fixture0002",
+      "time_created": 30000,
+      "data": {
+        "type": "text",
+        "text": "Create a fixture note, read it, and report synthetic status."
+      }
+    },
+    {
+      "id": "prt_fixture0012",
+      "message_id": "msg_fixture0006",
+      "session_id": "ses_fixture0002",
+      "time_created": 31000,
+      "data": {
+        "snapshot": "snapshot-before-placeholder",
+        "type": "step-start"
+      }
+    },
+    {
+      "id": "prt_fixture0013",
+      "message_id": "msg_fixture0006",
+      "session_id": "ses_fixture0002",
+      "time_created": 32000,
+      "data": {
+        "type": "tool",
+        "tool": "bash",
+        "callID": "call-placeholder-03",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "printf fixture-output-12"
+          },
+          "output": "fixture-output-12",
+          "metadata": {
+            "fixture": true
+          },
+          "title": "Synthetic command",
+          "time": {
+            "start": 32100,
+            "end": 32200
+          }
+        },
+        "metadata": {
+          "provider-placeholder": {}
+        }
+      }
+    },
+    {
+      "id": "prt_fixture0014",
+      "message_id": "msg_fixture0006",
+      "session_id": "ses_fixture0002",
+      "time_created": 33000,
+      "data": {
+        "reason": "tool-calls",
+        "snapshot": "snapshot-after-placeholder",
+        "type": "step-finish",
+        "tokens": {
+          "total": 15,
+          "input": 14,
+          "output": 1,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "cost": 0
+      }
+    },
+    {
+      "id": "prt_fixture0015",
+      "message_id": "msg_fixture0006",
+      "session_id": "ses_fixture0002",
+      "time_created": 34000,
+      "data": {
+        "type": "patch",
+        "hash": "snapshot-before-placeholder",
+        "files": [
+          "/home/u/kilo-fixture/notes.txt"
+        ]
+      }
+    },
+    {
+      "id": "prt_fixture0016",
+      "message_id": "msg_fixture0007",
+      "session_id": "ses_fixture0002",
+      "time_created": 35000,
+      "data": {
+        "snapshot": "snapshot-after-placeholder",
+        "type": "step-start"
+      }
+    },
+    {
+      "id": "prt_fixture0017",
+      "message_id": "msg_fixture0007",
+      "session_id": "ses_fixture0002",
+      "time_created": 36000,
+      "data": {
+        "type": "tool",
+        "tool": "bash",
+        "callID": "call-placeholder-04",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "printf fixture-output-16"
+          },
+          "output": "fixture-output-16",
+          "metadata": {
+            "fixture": true
+          },
+          "title": "Synthetic command",
+          "time": {
+            "start": 36100,
+            "end": 36200
+          }
+        },
+        "metadata": {
+          "provider-placeholder": {}
+        }
+      }
+    },
+    {
+      "id": "prt_fixture0018",
+      "message_id": "msg_fixture0007",
+      "session_id": "ses_fixture0002",
+      "time_created": 37000,
+      "data": {
+        "reason": "tool-calls",
+        "snapshot": "snapshot-after-placeholder",
+        "type": "step-finish",
+        "tokens": {
+          "total": 19,
+          "input": 18,
+          "output": 1,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "cost": 0
+      }
+    },
+    {
+      "id": "prt_fixture0019",
+      "message_id": "msg_fixture0008",
+      "session_id": "ses_fixture0002",
+      "time_created": 38000,
+      "data": {
+        "snapshot": "snapshot-after-placeholder",
+        "type": "step-start"
+      }
+    },
+    {
+      "id": "prt_fixture0020",
+      "message_id": "msg_fixture0008",
+      "session_id": "ses_fixture0002",
+      "time_created": 39000,
+      "data": {
+        "type": "tool",
+        "tool": "bash",
+        "callID": "call-placeholder-05",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "printf fixture-output-19"
+          },
+          "output": "fixture-output-19",
+          "metadata": {
+            "fixture": true
+          },
+          "title": "Synthetic command",
+          "time": {
+            "start": 39100,
+            "end": 39200
+          }
+        },
+        "metadata": {
+          "provider-placeholder": {}
+        }
+      }
+    },
+    {
+      "id": "prt_fixture0021",
+      "message_id": "msg_fixture0008",
+      "session_id": "ses_fixture0002",
+      "time_created": 40000,
+      "data": {
+        "reason": "tool-calls",
+        "snapshot": "snapshot-after-placeholder",
+        "type": "step-finish",
+        "tokens": {
+          "total": 22,
+          "input": 21,
+          "output": 1,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "cost": 0
+      }
+    },
+    {
+      "id": "prt_fixture0022",
+      "message_id": "msg_fixture0009",
+      "session_id": "ses_fixture0002",
+      "time_created": 41000,
+      "data": {
+        "snapshot": "snapshot-after-placeholder",
+        "type": "step-start"
+      }
+    },
+    {
+      "id": "prt_fixture0023",
+      "message_id": "msg_fixture0009",
+      "session_id": "ses_fixture0002",
+      "time_created": 42000,
+      "data": {
+        "type": "text",
+        "text": "The fixture note was created and verified.",
+        "time": {
+          "start": 1000,
+          "end": 1000
+        }
+      }
+    },
+    {
+      "id": "prt_fixture0024",
+      "message_id": "msg_fixture0009",
+      "session_id": "ses_fixture0002",
+      "time_created": 43000,
+      "data": {
+        "reason": "stop",
+        "snapshot": "snapshot-after-placeholder",
+        "type": "step-finish",
+        "tokens": {
+          "total": 25,
+          "input": 24,
+          "output": 1,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "cost": 0
+      }
+    }
+  ]
+}

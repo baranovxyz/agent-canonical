@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        pnpm-version: [9, 10, 11]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ matrix.pnpm-version }}
+      # No pnpm cache: this repository publishes no lockfile, and setup-node's cache
+      # option hard-fails without pnpm-lock.yaml.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: pnpm install --no-frozen-lockfile
+      - run: pnpm build
+      - run: pnpm test
+      - name: Preview npm tarball contents
+        run: |
+          mkdir pack
+          pnpm pack --pack-destination pack
+          TARBALL=$(find pack -maxdepth 1 -name '*.tgz' -print -quit)
+          test -n "$TARBALL"
+          tar -tf "$TARBALL"
+      - name: Verify packed exports resolve to dist
+        run: |
+          TARBALL=$(find pack -maxdepth 1 -name '*.tgz' -print -quit)
+          tar -xOf "$TARBALL" package/package.json > packed.json
+          node -e "
+            const m = require('./packed.json');
+            const bad = Object.entries(m.exports).filter(([k, v]) =>
+              JSON.stringify(v).includes('./src'));
+            if (bad.length) { console.error('exports still point at src:', bad); process.exit(1); }
+            if (!JSON.stringify(m.exports).includes('./dist')) { console.error('no dist exports'); process.exit(1); }
+          "
+      - name: Scan built dist for live secrets
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh \
+            | sh -s -- -b "$RUNNER_TEMP/bin"
+          "$RUNNER_TEMP/bin/trufflehog" filesystem ./dist --only-verified --fail
+
+  secret-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # gitleaks-action lists PR commits via the API on pull_request events
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Gitleaks (regex secret scan over full history)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # contents:read only — commenting on PRs would 403 (Resource not accessible)
+          GITLEAKS_ENABLE_COMMENTS: false

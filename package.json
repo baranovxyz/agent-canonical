@@ -1,0 +1,117 @@
+{
+  "devDependencies": {
+    "@biomejs/biome": "2.5.2",
+    "@types/node": "^22.20.1",
+    "tsup": "^8.0.0",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7",
+    "zod": "4.4.3"
+  },
+  "name": "agent-canonical",
+  "version": "0.1.1",
+  "description": "Canonical session/transcript schemas and per-CLI transcript-format knowledge for AI coding agents (claude-code, codex, opencode, cursor, gemini, qwen, kilo)",
+  "keywords": [
+    "coding-agent",
+    "agent-sessions",
+    "session-transcripts",
+    "canonical",
+    "schema",
+    "zod",
+    "claude-code",
+    "codex",
+    "opencode",
+    "cursor",
+    "gemini",
+    "qwen",
+    "kilo"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/baranovxyz/agent-canonical.git"
+  },
+  "homepage": "https://github.com/baranovxyz/agent-canonical#readme",
+  "bugs": {
+    "url": "https://github.com/baranovxyz/agent-canonical/issues"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    "./schemas": "./src/schemas/index.ts",
+    "./dialects": "./src/dialects/index.ts",
+    "./parsers": "./src/parsers/index.ts",
+    "./parsers/claude-code": "./src/parsers/claude-code/index.ts",
+    "./parsers/codex": "./src/parsers/codex/index.ts",
+    "./parsers/opencode": "./src/parsers/opencode/index.ts",
+    "./parsers/cursor": "./src/parsers/cursor/index.ts",
+    "./parsers/gemini": "./src/parsers/gemini/index.ts",
+    "./parsers/qwen": "./src/parsers/qwen/index.ts",
+    "./parsers/kilo": "./src/parsers/kilo/index.ts"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "rm -rf dist && tsup",
+    "prepublishOnly": "npm run test:artifact",
+    "lint": "tsc --noEmit && biome check .",
+    "lint:fix": "biome check --write .",
+    "test": "vitest run",
+    "test:artifact": "vitest run tests/package-artifact.test.ts",
+    "test:watch": "vitest --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "peerDependencies": {
+    "zod": "^4.4.3"
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      "./schemas": {
+        "types": "./dist/schemas/index.d.ts",
+        "default": "./dist/schemas/index.js"
+      },
+      "./dialects": {
+        "types": "./dist/dialects/index.d.ts",
+        "default": "./dist/dialects/index.js"
+      },
+      "./parsers": {
+        "types": "./dist/parsers/index.d.ts",
+        "default": "./dist/parsers/index.js"
+      },
+      "./parsers/claude-code": {
+        "types": "./dist/parsers/claude-code/index.d.ts",
+        "default": "./dist/parsers/claude-code/index.js"
+      },
+      "./parsers/codex": {
+        "types": "./dist/parsers/codex/index.d.ts",
+        "default": "./dist/parsers/codex/index.js"
+      },
+      "./parsers/opencode": {
+        "types": "./dist/parsers/opencode/index.d.ts",
+        "default": "./dist/parsers/opencode/index.js"
+      },
+      "./parsers/cursor": {
+        "types": "./dist/parsers/cursor/index.d.ts",
+        "default": "./dist/parsers/cursor/index.js"
+      },
+      "./parsers/gemini": {
+        "types": "./dist/parsers/gemini/index.d.ts",
+        "default": "./dist/parsers/gemini/index.js"
+      },
+      "./parsers/qwen": {
+        "types": "./dist/parsers/qwen/index.d.ts",
+        "default": "./dist/parsers/qwen/index.js"
+      },
+      "./parsers/kilo": {
+        "types": "./dist/parsers/kilo/index.d.ts",
+        "default": "./dist/parsers/kilo/index.js"
+      }
+    }
+  }
+}
