@@ -1,7 +1,7 @@
 import type { DialectDescriptor } from "./types.js";
 
 /**
- * cline: Cline's per-session JSON store (the `@cline/cli` binary is `clite`).
+ * cline: Cline's per-session JSON store (the `@cline/cli` binary is `cline`).
  *
  * Each session is a directory `~/.cline/data/sessions/<id>/` holding two files:
  * `<id>.messages.json` (the versioned `messages-contract-v1` payload —
@@ -30,8 +30,7 @@ import type { DialectDescriptor } from "./types.js";
 export const cline: DialectDescriptor = {
   id: "cline",
   displayName: "Cline",
-  // The @cline/cli package installs its binary as `clite`, not `cline`.
-  binary: "clite",
+  binary: "cline",
   transcriptStore: {
     kind: "json",
     root: "~/.cline/data/sessions",

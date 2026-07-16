@@ -2,6 +2,12 @@
 
 Notable agent-canonical changes only. Detailed implementation notes belong in commit history.
 
+## 0.1.5 - 2026-07-16
+
+- Corrected Cline's dialect descriptor to advertise the current `@cline/cli` binary, `cline`.
+  The parser remains validated against the 0.0.13 `messages-contract-v1` capture; that preview
+  release installed the earlier `clite` binary name.
+
 ## 0.1.4 - 2026-07-16
 
 - Added a `/parsers/cline` entry for Cline (`@cline/cli`, binary `clite`). Cline writes each session
