@@ -1,7 +1,7 @@
 /**
  * Cline transcript parser — public surface.
  *
- * Cline (`@cline/cli`, binary `clite`) writes each session as a directory
+ * Cline (`@cline/cli`, binary `cline`) writes each session as a directory
  * `~/.cline/data/sessions/<id>/` holding two JSON files: `<id>.messages.json`
  * (the versioned `messages-contract-v1` payload) and `<id>.json` (session-level
  * metadata). This shell reads the messages file, reads the sibling metadata file
