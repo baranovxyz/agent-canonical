@@ -7,8 +7,11 @@ import type { CliKind } from "../schemas/session.js";
 
 export interface TranscriptStoreDescriptor {
   /** Storage technology of the on-disk session store. */
-  kind: "jsonl" | "sqlite";
-  /** Store root, `~`-relative; consumers expand against the CLI host's home. */
+  kind: "jsonl" | "sqlite" | "json";
+  /**
+   * Human-readable store root. Usually `~`-relative; a CLI with platform or
+   * environment-dependent placement may use a resolver placeholder instead.
+   */
   root: string;
   /**
    * Path layout under the root — a human-readable pattern, not a glob.

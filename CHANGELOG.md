@@ -2,6 +2,22 @@
 
 Notable agent-canonical changes only. Detailed implementation notes belong in commit history.
 
+## 0.1.4 - 2026-07-16
+
+- Added a `/parsers/cline` entry for Cline (`@cline/cli`, binary `clite`). Cline writes each session
+  as a directory `~/.cline/data/sessions/<id>/` with two JSON files: `<id>.messages.json` (the
+  versioned `messages-contract-v1` payload) and `<id>.json` (session metadata). Content is
+  Anthropic-native — `content` is an array of `text` / `thinking` / `tool_use` / `tool_result`
+  blocks, with `tool_result` riding on a `role:"user"` message and correlating to its `tool_use`
+  (on an earlier assistant message) by `tool_use_id`. Per-message usage lives in `metrics` on the
+  terminal assistant message of a turn; timestamps are epoch ms. It reuses neither opencode's
+  tabular store nor goose's serde union — a genuinely new, file-based decoder. A new `json` store
+  kind covers the per-session JSON-object envelope.
+- Corrected Goose's store descriptor to represent the data directory resolved by Goose 1.43's path
+  helper instead of claiming one Linux path applies everywhere. Current Unix/macOS installs use
+  XDG data paths, Windows uses `%APPDATA%\Block\goose\data`, `GOOSE_PATH_ROOT` moves data under
+  `<GOOSE_PATH_ROOT>/data`, and older macOS installs may retain the legacy Application Support path.
+
 ## 0.1.3 - 2026-07-16
 
 - Added a `/parsers/goose` entry for Goose (Rust; AAIF/Linux Foundation). Goose keeps a single

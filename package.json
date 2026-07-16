@@ -8,8 +8,8 @@
     "zod": "4.4.3"
   },
   "name": "agent-canonical",
-  "version": "0.1.3",
-  "description": "Canonical session/transcript schemas and per-CLI transcript-format knowledge for AI coding agents (claude-code, codex, opencode, cursor, gemini, qwen, kilo, goose)",
+  "version": "0.1.4",
+  "description": "Canonical session/transcript schemas and per-CLI transcript-format knowledge for AI coding agents (claude-code, codex, opencode, cursor, gemini, qwen, kilo, goose, cline)",
   "keywords": [
     "coding-agent",
     "agent-sessions",
@@ -24,7 +24,8 @@
     "gemini",
     "qwen",
     "kilo",
-    "goose"
+    "goose",
+    "cline"
   ],
   "license": "MIT",
   "repository": {
@@ -48,7 +49,8 @@
     "./parsers/gemini": "./src/parsers/gemini/index.ts",
     "./parsers/qwen": "./src/parsers/qwen/index.ts",
     "./parsers/kilo": "./src/parsers/kilo/index.ts",
-    "./parsers/goose": "./src/parsers/goose/index.ts"
+    "./parsers/goose": "./src/parsers/goose/index.ts",
+    "./parsers/cline": "./src/parsers/cline/index.ts"
   },
   "files": [
     "dist",
@@ -117,6 +119,10 @@
       "./parsers/goose": {
         "types": "./dist/parsers/goose/index.d.ts",
         "default": "./dist/parsers/goose/index.js"
+      },
+      "./parsers/cline": {
+        "types": "./dist/parsers/cline/index.d.ts",
+        "default": "./dist/parsers/cline/index.js"
       }
     }
   }

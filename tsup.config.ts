@@ -27,6 +27,7 @@ export default defineConfig({
     "parsers/qwen/index": "src/parsers/qwen/index.ts",
     "parsers/kilo/index": "src/parsers/kilo/index.ts",
     "parsers/goose/index": "src/parsers/goose/index.ts",
+    "parsers/cline/index": "src/parsers/cline/index.ts",
   },
   format: ["esm"],
   target: "node18",
