@@ -78,12 +78,44 @@ const ReasoningPayloadSchema = z.object({
   summary: z.array(ReasoningPartSchema).optional(),
 });
 
-const SessionMetaPayloadSchema = z.object({
-  id: z.string().optional(),
-  cwd: z.string().optional(),
-  cli_version: z.string().optional(),
-  originator: z.string().optional(),
-});
+const ThreadSpawnSourceSchema = z
+  .object({
+    parent_thread_id: z.string().nullable().optional(),
+    depth: z.number().int().nonnegative().optional(),
+    agent_path: z.string().nullable().optional(),
+    agent_nickname: z.string().nullable().optional(),
+    agent_role: z.string().nullable().optional(),
+  })
+  .passthrough();
+
+const SubagentSourceSchema = z
+  .object({
+    thread_spawn: ThreadSpawnSourceSchema.optional(),
+    other: z.string().optional(),
+  })
+  .passthrough();
+
+const ObjectSessionSourceSchema = z
+  .object({
+    subagent: SubagentSourceSchema.optional(),
+  })
+  .passthrough();
+
+const SessionMetaPayloadSchema = z
+  .object({
+    id: z.string().optional(),
+    cwd: z.string().optional(),
+    cli_version: z.string().optional(),
+    originator: z.string().optional(),
+    source: z.unknown().optional(),
+    thread_source: z.string().optional(),
+    parent_thread_id: z.string().nullable().optional(),
+    forked_from_id: z.string().nullable().optional(),
+    agent_path: z.string().nullable().optional(),
+    agent_nickname: z.string().nullable().optional(),
+    multi_agent_version: z.string().optional(),
+  })
+  .passthrough();
 
 const TurnContextPayloadSchema = z.object({
   model: z.string().optional(),
@@ -133,6 +165,8 @@ export type DecodedSessionMeta = {
   id: string | undefined;
   cwd: string | undefined;
   originator: string | undefined;
+  directParentId: string | undefined;
+  agentType: string | undefined;
 };
 
 export type DecodedTurnContext = {
@@ -249,6 +283,72 @@ function parseTs(timestamp: string | undefined): number | undefined {
   return Number.isFinite(ms) ? Math.floor(ms / 1000) : undefined;
 }
 
+function nonEmpty(value: string | null | undefined): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function decodeSessionLineage(
+  payload: z.infer<typeof SessionMetaPayloadSchema>,
+  seq: number,
+  collector: IssueCollector,
+): { directParentId: string | undefined; agentType: string | undefined } {
+  const sourceResult = ObjectSessionSourceSchema.safeParse(payload.source);
+  const subagent = sourceResult.success
+    ? sourceResult.data.subagent
+    : undefined;
+  const spawn = subagent?.thread_spawn;
+
+  const nestedParentId = nonEmpty(spawn?.parent_thread_id);
+  const topLevelParentId = nonEmpty(payload.parent_thread_id);
+  const forkedFromId = nonEmpty(payload.forked_from_id);
+
+  if (
+    nestedParentId !== undefined &&
+    topLevelParentId !== undefined &&
+    nestedParentId !== topLevelParentId
+  ) {
+    collector.warn(
+      `line ${seq}: conflicting Codex parent metadata; using thread_spawn.parent_thread_id`,
+      { seq },
+    );
+  }
+
+  const authoritativeParentId = nestedParentId ?? topLevelParentId;
+  if (
+    authoritativeParentId !== undefined &&
+    forkedFromId !== undefined &&
+    authoritativeParentId !== forkedFromId
+  ) {
+    collector.warn(
+      `line ${seq}: conflicting Codex fork metadata; using direct parent_thread_id`,
+      { seq },
+    );
+  }
+
+  // A user-created fork can carry forked_from_id without being a collaboration
+  // child. Accept it only when the header independently identifies a subagent.
+  const isSubagent =
+    payload.thread_source === "subagent" || subagent !== undefined;
+  const directParentId =
+    authoritativeParentId ?? (isSubagent ? forkedFromId : undefined);
+
+  let agentType: string | undefined;
+  if (isSubagent) {
+    if (subagent?.other === "guardian") {
+      agentType = "guardian";
+    } else {
+      agentType =
+        nonEmpty(spawn?.agent_role) ??
+        nonEmpty(spawn?.agent_path) ??
+        nonEmpty(payload.agent_path);
+    }
+  }
+
+  return { directParentId, agentType };
+}
+
 /**
  * Flatten a tool output that can be a plain string or an array of
  * `{text:"..."}` parts (multimodal). Returns "" for missing/unknown.
@@ -348,12 +448,15 @@ export function decodeLine(
         );
         return { kind: "skip", ts };
       }
+      const lineage = decodeSessionLineage(r.data, seq, collector);
       return {
         kind: "session_meta",
         ts,
         id: r.data.id,
         cwd: r.data.cwd,
         originator: r.data.originator,
+        directParentId: lineage.directParentId,
+        agentType: lineage.agentType,
       };
     }
 

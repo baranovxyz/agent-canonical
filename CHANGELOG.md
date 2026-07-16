@@ -2,6 +2,11 @@
 
 Notable agent-canonical changes only. Detailed implementation notes belong in commit history.
 
+## 0.1.2 - 2026-07-16
+
+- Preserve Codex collaboration lineage as direct `parentSessionId` edges, classify spawned workers
+  by role or path, and identify Guardian review sessions while leaving user roots untyped.
+
 ## 0.1.1 - 2026-07-16
 
 - Add the Kilo Code dialect and `/parsers/kilo` export. Kilo reuses the OpenCode SQLite reader

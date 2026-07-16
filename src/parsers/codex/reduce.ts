@@ -59,6 +59,10 @@ function summarizeOutput(text: string): {
   };
 }
 
+function canonicalCodexSessionId(id: string): string {
+  return id.startsWith("cx--") ? id : `cx--${id}`;
+}
+
 /**
  * function_call_output text may carry a header "Process exited with code N".
  * Returns undefined when the header is absent.
@@ -80,6 +84,7 @@ function parseFunctionCallExitCode(text: string): number | undefined {
 
 export interface ReduceResult {
   sessionId: string | undefined;
+  directParentId: string | undefined;
   projectPath: string | undefined;
   model: string | undefined;
   agentType: string | undefined;
@@ -105,6 +110,7 @@ export function reduceEvents(
   _collector: IssueCollector,
 ): ReduceResult {
   let sessionId: string | undefined;
+  let directParentId: string | undefined;
   let projectPath: string | undefined;
   let model: string | undefined;
   let agentType: string | undefined;
@@ -165,8 +171,9 @@ export function reduceEvents(
     switch (event.kind) {
       case "session_meta": {
         if (sessionId === undefined) sessionId = event.id;
+        if (directParentId === undefined) directParentId = event.directParentId;
         if (projectPath === undefined) projectPath = event.cwd;
-        if (agentType === undefined) agentType = event.originator;
+        if (agentType === undefined) agentType = event.agentType;
         break;
       }
 
@@ -332,6 +339,7 @@ export function reduceEvents(
 
   return {
     sessionId,
+    directParentId,
     projectPath,
     model,
     agentType,
@@ -377,6 +385,8 @@ export function assembleSession(
 
   if (result.projectPath !== undefined)
     session.projectPath = result.projectPath;
+  if (result.directParentId !== undefined)
+    session.parentSessionId = canonicalCodexSessionId(result.directParentId);
   if (result.model !== undefined) session.model = result.model;
   if (result.agentType !== undefined) session.agentType = result.agentType;
   if (result.startedAt !== undefined) session.startedAt = result.startedAt;
