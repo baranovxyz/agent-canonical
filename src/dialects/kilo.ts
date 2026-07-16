@@ -47,4 +47,7 @@ export const kilo: DialectDescriptor = {
     permissionAwaitingOnDisk: false,
     perMessageUsage: true,
   },
+  validatedAgainst: {
+    cliVersions: ["7.4.9"],
+  },
 };

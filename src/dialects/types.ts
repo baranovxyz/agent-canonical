@@ -61,4 +61,23 @@ export interface DialectDescriptor {
     globalDir: string;
   };
   capabilities: DialectCapabilities;
+  /**
+   * Provenance of the parser's validated baseline: the CLI version(s) and
+   * on-disk store version a captured session confirmed this dialect against. These
+   * stores drift fast (Qwen and Gemini have both changed layouts across releases;
+   * Kilo ships a legacy `message`/`part` model alongside a newer event-sourced
+   * one), so recording the tested baseline flags when a post-upgrade format may
+   * have moved past what the parser has seen. Parsers
+   * stay version-agnostic and permissive — this documents the baseline, it does
+   * not gate decoding. Optional: absent on dialects validated before this field.
+   */
+  validatedAgainst?: DialectProvenance;
+}
+
+/** Validated-baseline provenance for a dialect's parser (see `validatedAgainst`). */
+export interface DialectProvenance {
+  /** CLI product version(s) a captured session was taken from (e.g. "1.43.0"). */
+  cliVersions: string[];
+  /** On-disk store / schema version, when the store carries one (e.g. goose "15"). */
+  storeSchemaVersion?: string;
 }
