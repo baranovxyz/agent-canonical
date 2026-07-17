@@ -1,0 +1,559 @@
+{
+ "sessions": [
+  {
+   "sessionId": "copilot_fixture_1",
+   "events": [
+    {
+     "type": "session.start",
+     "data": {
+      "sessionId": "copilot_fixture_1",
+      "version": 1,
+      "producer": "copilot-agent",
+      "copilotVersion": "1.0.70",
+      "startTime": "2026-01-01T00:00:00.000Z",
+      "contextTier": null,
+      "context": {
+       "cwd": "/home/u/copilot-cap",
+       "gitRoot": "/home/u/copilot-cap",
+       "branch": "master",
+       "headCommit": "commit-placeholder"
+      },
+      "alreadyInUse": false,
+      "remoteSteerable": false
+     },
+     "id": "id_1",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "parentId": null
+    },
+    {
+     "type": "session.model_change",
+     "data": {
+      "newModel": "model-placeholder"
+     },
+     "id": "id_2",
+     "timestamp": "2026-01-01T00:00:01.000Z",
+     "parentId": "id_1"
+    },
+    {
+     "type": "system.message",
+     "data": {
+      "role": "system",
+      "content": "[system prompt]"
+     },
+     "id": "id_3",
+     "timestamp": "2026-01-01T00:00:02.000Z",
+     "parentId": "id_2"
+    },
+    {
+     "type": "user.message",
+     "data": {
+      "content": "Without using any tools, reply in exactly one short sentence: what is the capital of France?",
+      "attachments": [],
+      "supportedNativeDocumentMimeTypes": [],
+      "delivery": "idle",
+      "interactionId": "id_4",
+      "parentAgentTaskId": "id_5"
+     },
+     "id": "id_6",
+     "timestamp": "2026-01-01T00:00:03.000Z",
+     "parentId": "id_3"
+    },
+    {
+     "type": "assistant.turn_start",
+     "data": {
+      "turnId": "0",
+      "model": "model-placeholder",
+      "interactionId": "id_4"
+     },
+     "id": "id_7",
+     "timestamp": "2026-01-01T00:00:04.000Z",
+     "parentId": "id_6"
+    },
+    {
+     "type": "assistant.message",
+     "data": {
+      "messageId": "id_8",
+      "model": "model-placeholder",
+      "content": "The capital of France is Paris.",
+      "toolRequests": [],
+      "interactionId": "id_4",
+      "turnId": "0",
+      "outputTokens": 10
+     },
+     "id": "id_9",
+     "timestamp": "2026-01-01T00:00:05.000Z",
+     "parentId": "id_7"
+    },
+    {
+     "type": "assistant.turn_end",
+     "data": {
+      "turnId": "0",
+      "model": "model-placeholder"
+     },
+     "id": "id_10",
+     "timestamp": "2026-01-01T00:00:06.000Z",
+     "parentId": "id_9"
+    },
+    {
+     "type": "system.message",
+     "data": {
+      "role": "system",
+      "content": "[system prompt]"
+     },
+     "id": "id_11",
+     "timestamp": "2026-01-01T00:00:07.000Z",
+     "parentId": "id_10"
+    },
+    {
+     "type": "user.message",
+     "data": {
+      "content": "Run the shell command: wc -l README.md app.js and tell me the total line count.",
+      "attachments": [],
+      "supportedNativeDocumentMimeTypes": [],
+      "delivery": "idle",
+      "interactionId": "id_12",
+      "parentAgentTaskId": "id_13"
+     },
+     "id": "id_14",
+     "timestamp": "2026-01-01T00:00:08.000Z",
+     "parentId": "id_11"
+    },
+    {
+     "type": "assistant.turn_start",
+     "data": {
+      "turnId": "0",
+      "model": "model-placeholder",
+      "interactionId": "id_12"
+     },
+     "id": "id_15",
+     "timestamp": "2026-01-01T00:00:09.000Z",
+     "parentId": "id_14"
+    },
+    {
+     "type": "assistant.message",
+     "data": {
+      "messageId": "id_16",
+      "model": "model-placeholder",
+      "content": "",
+      "toolRequests": [
+       {
+        "toolCallId": "bash_fixture_1",
+        "name": "bash",
+        "arguments": {
+         "command": "wc -l README.md app.js",
+         "description": "Count lines in README.md and app.js"
+        },
+        "type": "function",
+        "intentionSummary": "Count lines in README.md and app.js"
+       }
+      ],
+      "interactionId": "id_12",
+      "turnId": "0",
+      "outputTokens": 86
+     },
+     "id": "id_17",
+     "timestamp": "2026-01-01T00:00:10.000Z",
+     "parentId": "id_15"
+    },
+    {
+     "type": "tool.execution_start",
+     "data": {
+      "toolCallId": "bash_fixture_1",
+      "toolName": "bash",
+      "arguments": {
+       "command": "wc -l README.md app.js",
+       "description": "Count lines in README.md and app.js"
+      },
+      "model": "model-placeholder",
+      "turnId": "0",
+      "shellToolInfo": {
+       "possiblePaths": [
+        "README.md",
+        "app.js"
+       ],
+       "hasWriteFileRedirection": false
+      }
+     },
+     "id": "id_18",
+     "timestamp": "2026-01-01T00:00:11.000Z",
+     "parentId": "id_17"
+    },
+    {
+     "type": "tool.execution_complete",
+     "data": {
+      "toolCallId": "bash_fixture_1",
+      "model": "model-placeholder",
+      "interactionId": "id_12",
+      "turnId": "0",
+      "success": true,
+      "result": {
+       "content": "1 README.md\n 1 app.js\n 2 total\n<shellId: 0 completed with exit code 0>",
+       "detailedContent": "1 README.md\n 1 app.js\n 2 total\n<shellId: 0 completed with exit code 0>"
+      },
+      "toolTelemetry": {
+       "properties": {
+        "customTimeout": "false",
+        "executionMode": "sync",
+        "detached": "false",
+        "sandboxApplied": "false",
+        "sandboxOptOutRequested": "false",
+        "asyncOnlyShell": "false"
+       },
+       "metrics": {
+        "commandTimeout": 30000
+       }
+      }
+     },
+     "id": "id_19",
+     "timestamp": "2026-01-01T00:00:12.000Z",
+     "parentId": "id_18"
+    },
+    {
+     "type": "assistant.turn_end",
+     "data": {
+      "turnId": "0",
+      "model": "model-placeholder"
+     },
+     "id": "id_20",
+     "timestamp": "2026-01-01T00:00:13.000Z",
+     "parentId": "id_19"
+    },
+    {
+     "type": "assistant.turn_start",
+     "data": {
+      "turnId": "1",
+      "model": "model-placeholder",
+      "interactionId": "id_12"
+     },
+     "id": "id_21",
+     "timestamp": "2026-01-01T00:00:14.000Z",
+     "parentId": "id_20"
+    },
+    {
+     "type": "assistant.message",
+     "data": {
+      "messageId": "id_22",
+      "model": "model-placeholder",
+      "content": "The total line count is **2 lines** (1 line in README.md + 1 line in app.js).",
+      "toolRequests": [],
+      "interactionId": "id_12",
+      "turnId": "1",
+      "outputTokens": 31
+     },
+     "id": "id_23",
+     "timestamp": "2026-01-01T00:00:15.000Z",
+     "parentId": "id_21"
+    },
+    {
+     "type": "assistant.turn_end",
+     "data": {
+      "turnId": "1",
+      "model": "model-placeholder"
+     },
+     "id": "id_24",
+     "timestamp": "2026-01-01T00:00:16.000Z",
+     "parentId": "id_23"
+    },
+    {
+     "type": "system.message",
+     "data": {
+      "role": "system",
+      "content": "[system prompt]"
+     },
+     "id": "id_25",
+     "timestamp": "2026-01-01T00:00:17.000Z",
+     "parentId": "id_24"
+    },
+    {
+     "type": "user.message",
+     "data": {
+      "content": "Create a new file named notes.txt containing exactly one line: captured-ok",
+      "attachments": [],
+      "supportedNativeDocumentMimeTypes": [],
+      "delivery": "idle",
+      "interactionId": "id_26",
+      "parentAgentTaskId": "id_27"
+     },
+     "id": "id_28",
+     "timestamp": "2026-01-01T00:00:18.000Z",
+     "parentId": "id_25"
+    },
+    {
+     "type": "assistant.turn_start",
+     "data": {
+      "turnId": "0",
+      "model": "model-placeholder",
+      "interactionId": "id_26"
+     },
+     "id": "id_29",
+     "timestamp": "2026-01-01T00:00:19.000Z",
+     "parentId": "id_28"
+    },
+    {
+     "type": "assistant.message",
+     "data": {
+      "messageId": "id_30",
+      "model": "model-placeholder",
+      "content": "",
+      "toolRequests": [
+       {
+        "toolCallId": "create_fixture_1",
+        "name": "create",
+        "arguments": {
+         "path": "/home/u/copilot-cap/notes.txt",
+         "file_text": "captured-ok\n"
+        },
+        "type": "function",
+        "intentionSummary": "create a new file at /home/u/copilot-cap/notes.txt."
+       }
+      ],
+      "interactionId": "id_26",
+      "turnId": "0",
+      "outputTokens": 88
+     },
+     "id": "id_31",
+     "timestamp": "2026-01-01T00:00:20.000Z",
+     "parentId": "id_29"
+    },
+    {
+     "type": "tool.execution_start",
+     "data": {
+      "toolCallId": "create_fixture_1",
+      "toolName": "create",
+      "arguments": {
+       "path": "/home/u/copilot-cap/notes.txt",
+       "file_text": "captured-ok\n"
+      },
+      "model": "model-placeholder",
+      "turnId": "0"
+     },
+     "id": "id_32",
+     "timestamp": "2026-01-01T00:00:21.000Z",
+     "parentId": "id_31"
+    },
+    {
+     "type": "tool.execution_complete",
+     "data": {
+      "toolCallId": "create_fixture_1",
+      "model": "model-placeholder",
+      "interactionId": "id_26",
+      "turnId": "0",
+      "success": true,
+      "result": {
+       "content": "Created file /home/u/copilot-cap/notes.txt with 12 characters",
+       "detailedContent": "\ndiff --git a/home/u/copilot-cap/notes.txt b/home/u/copilot-cap/notes.txt\ncreate file mode 100644\nindex 0000000..0000000\n--- a/dev/null\n+++ b/home/u/copilot-cap/notes.txt\n@@ -1,0 +1,2 @@\n+captured-ok\n+\n"
+      },
+      "toolTelemetry": {
+       "properties": {
+        "command": "create",
+        "options": "{\"truncateBasedOn\":\"tokenCount\",\"truncateStyle\":\"middle\"}",
+        "inputs": "[\"path\",\"file_text\",\"command\"]",
+        "resolvedPathAgainstCwd": "false",
+        "fileExtension": "[\".txt\"]",
+        "codeBlocks": "[{\"fileExt\":\".txt\",\"languageId\":\"text\",\"linesAdded\":2,\"linesRemoved\":0}]",
+        "languageId": "[\"text\"]"
+       },
+       "metrics": {
+        "resultLength": 69,
+        "resultForLlmLength": 69,
+        "responseTokenLimit": 42000,
+        "linesAdded": 2,
+        "linesRemoved": 0
+       },
+       "restrictedProperties": {
+        "filePaths": "[\"/home/u/copilot-cap/notes.txt\"]"
+       }
+      }
+     },
+     "id": "id_33",
+     "timestamp": "2026-01-01T00:00:22.000Z",
+     "parentId": "id_32"
+    },
+    {
+     "type": "assistant.turn_end",
+     "data": {
+      "turnId": "0",
+      "model": "model-placeholder"
+     },
+     "id": "id_34",
+     "timestamp": "2026-01-01T00:00:23.000Z",
+     "parentId": "id_33"
+    },
+    {
+     "type": "assistant.turn_start",
+     "data": {
+      "turnId": "1",
+      "model": "model-placeholder",
+      "interactionId": "id_26"
+     },
+     "id": "id_35",
+     "timestamp": "2026-01-01T00:00:24.000Z",
+     "parentId": "id_34"
+    },
+    {
+     "type": "assistant.message",
+     "data": {
+      "messageId": "id_36",
+      "model": "model-placeholder",
+      "content": "Created notes.txt with the line \"captured-ok\".",
+      "toolRequests": [],
+      "interactionId": "id_26",
+      "turnId": "1",
+      "outputTokens": 15
+     },
+     "id": "id_37",
+     "timestamp": "2026-01-01T00:00:25.000Z",
+     "parentId": "id_35"
+    },
+    {
+     "type": "assistant.turn_end",
+     "data": {
+      "turnId": "1",
+      "model": "model-placeholder"
+     },
+     "id": "id_38",
+     "timestamp": "2026-01-01T00:00:26.000Z",
+     "parentId": "id_37"
+    },
+    {
+     "type": "session.shutdown",
+     "data": {
+      "shutdownType": "routine",
+      "totalPremiumRequests": 0,
+      "totalNanoAiu": 0,
+      "totalApiDurationMs": 14570,
+      "codeChanges": {
+       "linesAdded": 2,
+       "linesRemoved": 0,
+       "filesModified": [
+        "/home/u/copilot-cap/notes.txt"
+       ]
+      },
+      "modelMetrics": {
+       "model-placeholder": {
+        "requests": {
+         "count": 5,
+         "cost": 0
+        },
+        "usage": {
+         "inputTokens": 73962,
+         "outputTokens": 230,
+         "cacheReadTokens": 0,
+         "cacheWriteTokens": 0,
+         "reasoningTokens": 0
+        },
+        "totalNanoAiu": 0
+       }
+      },
+      "currentModel": "model-placeholder",
+      "currentTokens": 13912,
+      "systemTokens": 6395,
+      "conversationTokens": 594,
+      "toolDefinitionsTokens": 6919
+     },
+     "id": "id_39",
+     "timestamp": "2026-01-01T00:00:27.000Z",
+     "parentId": "id_38"
+    }
+   ]
+  },
+  {
+   "sessionId": "copilot_fixture_2",
+   "events": [
+    {
+     "type": "session.start",
+     "data": {
+      "sessionId": "copilot_fixture_2",
+      "version": 1,
+      "producer": "copilot-agent",
+      "copilotVersion": "1.0.71",
+      "startTime": "2026-01-01T00:00:00.000Z",
+      "contextTier": null,
+      "context": {
+       "cwd": "/home/u/copilot-cap2",
+       "gitRoot": "/home/u/copilot-cap2",
+       "branch": "master",
+       "headCommit": "commit-placeholder"
+      },
+      "alreadyInUse": false,
+      "remoteSteerable": false
+     },
+     "id": "id_40",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "parentId": null
+    },
+    {
+     "type": "session.model_change",
+     "data": {
+      "newModel": "model-placeholder"
+     },
+     "id": "id_41",
+     "timestamp": "2026-01-01T00:00:01.000Z",
+     "parentId": "id_40"
+    },
+    {
+     "type": "system.message",
+     "data": {
+      "role": "system",
+      "content": "[system prompt]"
+     },
+     "id": "id_42",
+     "timestamp": "2026-01-01T00:00:02.000Z",
+     "parentId": "id_41"
+    },
+    {
+     "type": "user.message",
+     "data": {
+      "content": "Think step by step about why the sky appears blue, then give a one-sentence answer. Do not use any tools.",
+      "attachments": [],
+      "supportedNativeDocumentMimeTypes": [],
+      "delivery": "idle",
+      "interactionId": "id_43",
+      "parentAgentTaskId": "id_44"
+     },
+     "id": "id_45",
+     "timestamp": "2026-01-01T00:00:03.000Z",
+     "parentId": "id_42"
+    },
+    {
+     "type": "assistant.turn_start",
+     "data": {
+      "turnId": "0",
+      "model": "model-placeholder",
+      "interactionId": "id_43"
+     },
+     "id": "id_46",
+     "timestamp": "2026-01-01T00:00:04.000Z",
+     "parentId": "id_45"
+    },
+    {
+     "type": "assistant.message",
+     "data": {
+      "messageId": "id_47",
+      "model": "model-placeholder",
+      "content": "The sky appears blue because sunlight is scattered by molecules and small particles in Earth's atmosphere, with shorter blue wavelengths scattering more effectively than longer red wavelengths, making blue light dominate what we see when looking away from the sun.\n\n<thinking>\nThe user asked me to think step by step about why the sky appears blue and then provide a one-sentence answer without using any tools. I recalled the scientific explanation involving Rayleigh scattering, where shorter wavelengths of light (blue/violet) scatter more effectively in Earth's atmosphere than longer wavelengths (red/orange), and since human eyes are more sensitive to blue than violet, we perceive the sky as blue. I condensed this into a single-sentence answer that captures the essential physics without tool usage as instructed.\n</thinking>",
+      "toolRequests": [],
+      "interactionId": "id_43",
+      "turnId": "0",
+      "reasoningText": "We are given a task that does not require any tools. The task is to think step by step about why the sky appears blue and then give a one-sentence answer.\n We are explicitly instructed not to use any tools.\n Therefore, we will reason step by step and then provide the answer.\n\n Reasoning:\n 1. The sky appears blue due to a phenomenon called Rayleigh scattering.\n 2. Sunlight is composed of different colors (wavelengths) of light.\n 3. The Earth's atmosphere is made up of molecules and small particles.\n 4. When sunlight enters the atmosphere, it interacts with these molecules and particles.\n 5. Shorter wavelengths (blue and violet) are scattered more than longer wavelengths (red, orange, yellow).\n 6. Our eyes are more sensitive to blue light than violet, so we perceive the sky as blue.\n\n One-sentence answer:\n The sky appears blue because molecules in the Earth's atmosphere scatter shorter wavelengths of sunlight (blue and violet) more than longer ones, and human eyes are more sensitive to blue.",
+      "reasoningWireField": "reasoning",
+      "outputTokens": 369
+     },
+     "id": "id_48",
+     "timestamp": "2026-01-01T00:00:05.000Z",
+     "parentId": "id_46"
+    },
+    {
+     "type": "assistant.turn_end",
+     "data": {
+      "turnId": "0",
+      "model": "model-placeholder"
+     },
+     "id": "id_49",
+     "timestamp": "2026-01-01T00:00:06.000Z",
+     "parentId": "id_48"
+    }
+   ]
+  }
+ ]
+}

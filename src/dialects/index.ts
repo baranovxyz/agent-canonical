@@ -8,6 +8,7 @@ import type { CliKind } from "../schemas/session.js";
 import { claudeCode } from "./claude-code.js";
 import { cline } from "./cline.js";
 import { codex } from "./codex.js";
+import { copilot } from "./copilot.js";
 import { cursor } from "./cursor.js";
 import { gemini } from "./gemini.js";
 import { goose } from "./goose.js";
@@ -26,6 +27,7 @@ export const DIALECTS: Readonly<Record<CliKind, DialectDescriptor>> = {
   kilo,
   goose,
   cline,
+  copilot,
 };
 
 export function getDialect(id: CliKind): DialectDescriptor {
@@ -43,6 +45,7 @@ export {
   claudeCode,
   cline,
   codex,
+  copilot,
   cursor,
   gemini,
   goose,

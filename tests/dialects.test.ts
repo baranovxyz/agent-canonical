@@ -40,6 +40,12 @@ describe("dialect golden facts", () => {
     );
     expect(DIALECTS.goose.transcriptStore.pathPattern).toBe("sessions.db");
     expect(DIALECTS.cline.transcriptStore.root).toBe("~/.cline/data/sessions");
+    expect(DIALECTS.copilot.transcriptStore.root).toBe(
+      "~/.copilot/session-state",
+    );
+    expect(DIALECTS.copilot.transcriptStore.pathPattern).toBe(
+      "<sessionId>/events.jsonl",
+    );
   });
 
   it("pins store kinds and watermark axes", () => {
@@ -49,12 +55,14 @@ describe("dialect golden facts", () => {
     );
     // Cline keeps one JSON object per session file (not JSONL, not SQLite).
     expect(DIALECTS.cline.transcriptStore.kind).toBe("json");
+    // Copilot's events.jsonl is an append-only typed event stream.
     for (const kind of [
       "claude-code",
       "codex",
       "cursor",
       "gemini",
       "qwen",
+      "copilot",
     ] as const) {
       expect(DIALECTS[kind].transcriptStore.kind).toBe("jsonl");
       expect(DIALECTS[kind].transcriptStore.watermarkAxis).toBe("byte-offset");
@@ -71,6 +79,11 @@ describe("dialect golden facts", () => {
     expect(DIALECTS.gemini.turnEnd.kind).toBe("unavailable");
     expect(DIALECTS.gemini.capabilities.explicitTurnEnd).toBe(false);
     expect(DIALECTS.qwen.turnEnd.kind).toBe("unavailable");
+    expect(DIALECTS.copilot.turnEnd.kind).toBe("explicit");
+    expect(DIALECTS.copilot.turnEnd.description).toContain(
+      "assistant.turn_end",
+    );
+    expect(DIALECTS.copilot.capabilities.explicitTurnEnd).toBe(true);
 
     for (const kind of CliKindSchema.options) {
       expect(DIALECTS[kind].capabilities.incrementalRead).toBe(
@@ -104,7 +117,7 @@ describe("dialect golden facts", () => {
     }
   });
 
-  it("pins per-message usage: cc, oc, gemini, qwen, kilo, goose, and cline", () => {
+  it("pins per-message usage: cc, oc, gemini, qwen, kilo, goose, cline, and copilot", () => {
     for (const kind of CliKindSchema.options) {
       expect(DIALECTS[kind].capabilities.perMessageUsage).toBe(
         kind === "claude-code" ||
@@ -113,7 +126,8 @@ describe("dialect golden facts", () => {
           kind === "qwen" ||
           kind === "kilo" ||
           kind === "goose" ||
-          kind === "cline",
+          kind === "cline" ||
+          kind === "copilot",
       );
     }
   });
@@ -125,5 +139,6 @@ describe("dialect golden facts", () => {
     expect(DIALECTS.cursor.binary).toBe("cursor-agent");
     expect(DIALECTS.gemini.binary).toBe("gemini");
     expect(DIALECTS.cline.binary).toBe("cline");
+    expect(DIALECTS.copilot.binary).toBe("copilot");
   });
 });

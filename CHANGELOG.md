@@ -2,6 +2,24 @@
 
 Notable agent-canonical changes only. Detailed implementation notes belong in commit history.
 
+## 0.1.6 - 2026-07-17
+
+- Added a `/parsers/copilot` entry for GitHub Copilot CLI (`@github/copilot`, binary `copilot`).
+  Copilot writes each session as a directory `~/.copilot/session-state/<uuid>/` whose
+  `events.jsonl` is the lossless source of truth: one typed event per line, envelope
+  `{type, data, id, timestamp, parentId}`. The decoded vocabulary — `session.start`,
+  `session.model_change`, `user.message`, `assistant.message` (content, `toolRequests[]`, optional
+  `reasoningText`, per-message `outputTokens`), `tool.execution_complete` (result + `success`,
+  paired by `toolCallId`), and `session.shutdown` (per-model `modelMetrics.usage` totals) — folds
+  into a canonical Session. Tool correlation is cross-event (a call is issued in an
+  `assistant.message` and its output arrives later in a `tool.execution_complete`); `reasoningText`
+  becomes a `thinking` message. Per-message usage is output-only, so transcript totals come from
+  the shutdown aggregate, falling back to summed per-message output when no shutdown event was
+  written. A genuinely new, file-based decoder — a typed event stream, not cline's message array or
+  the opencode/goose tabular stores. Turn-end is explicit (`assistant.turn_end` + `session.shutdown`).
+  Validated against Copilot 1.0.70 (store `version` 1). The sibling per-session `session.db`
+  (transient todos/inbox) and the top-level `session-store.db` (a derived FTS index) are not read.
+
 ## 0.1.5 - 2026-07-16
 
 - Corrected Cline's dialect descriptor to advertise the current `@cline/cli` binary, `cline`.

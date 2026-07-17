@@ -20,7 +20,7 @@ const exportTargetSchema = z
 const packedManifestSchema = z
   .object({
     name: z.literal("agent-canonical"),
-    version: z.literal("0.1.5"),
+    version: z.literal("0.1.6"),
     peerDependencies: z
       .object({
         zod: z.string(),
@@ -80,6 +80,10 @@ const expectedExports: Record<string, ExportTarget> = {
   "./parsers/cline": {
     types: "./dist/parsers/cline/index.d.ts",
     default: "./dist/parsers/cline/index.js",
+  },
+  "./parsers/copilot": {
+    types: "./dist/parsers/copilot/index.d.ts",
+    default: "./dist/parsers/copilot/index.js",
   },
 };
 
