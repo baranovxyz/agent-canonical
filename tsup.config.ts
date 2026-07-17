@@ -28,6 +28,7 @@ export default defineConfig({
     "parsers/kilo/index": "src/parsers/kilo/index.ts",
     "parsers/goose/index": "src/parsers/goose/index.ts",
     "parsers/cline/index": "src/parsers/cline/index.ts",
+    "parsers/copilot/index": "src/parsers/copilot/index.ts",
   },
   format: ["esm"],
   target: "node18",
