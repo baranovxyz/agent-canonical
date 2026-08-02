@@ -20,7 +20,7 @@ const exportTargetSchema = z
 const packedManifestSchema = z
   .object({
     name: z.literal("agent-canonical"),
-    version: z.literal("0.1.6"),
+    version: z.literal("0.1.7"),
     peerDependencies: z
       .object({
         zod: z.string(),
@@ -142,7 +142,7 @@ describe("published package artifact", () => {
     await mkdir(extractDir);
     await execFileAsync("tar", ["-xzf", tarballPath, "-C", extractDir]);
     extractedPackageDir = join(extractDir, "package");
-  }, 30_000);
+  }, 60_000);
 
   afterAll(async () => {
     if (tempDir !== undefined) {

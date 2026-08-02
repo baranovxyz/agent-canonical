@@ -2,6 +2,12 @@
 
 Notable agent-canonical changes only. Detailed implementation notes belong in commit history.
 
+## 0.1.7 - 2026-08-02
+
+- Correct Codex usage accounting for forked sessions by summing current-task request deltas,
+  deduplicating repeated cumulative snapshots, preserving cache-write tokens, and omitting
+  inherited usage when reliable current-task request deltas are unavailable.
+
 ## 0.1.6 - 2026-07-17
 
 - Added a `/parsers/copilot` entry for GitHub Copilot CLI (`@github/copilot`, binary `copilot`).

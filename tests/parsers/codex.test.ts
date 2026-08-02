@@ -315,6 +315,478 @@ describe("codex parser — core behavior", () => {
     }
   });
 
+  it("counts only current-session request deltas after a fork replay", async () => {
+    const { file, cleanup } = makeTempRollout([
+      {
+        timestamp: "2026-04-28T10:00:00.000Z",
+        type: "session_meta",
+        payload: {
+          id: "codex-child-001",
+          cwd: "/tmp",
+          parent_thread_id: "codex-parent-001",
+          thread_source: "subagent",
+        },
+      },
+      {
+        timestamp: "2026-04-28T09:59:00.000Z",
+        type: "session_meta",
+        payload: { id: "codex-parent-001", cwd: "/tmp" },
+      },
+      {
+        timestamp: "2026-04-28T09:59:01.000Z",
+        type: "event_msg",
+        payload: { type: "task_started", started_at: 1_777_369_000 },
+      },
+      {
+        timestamp: "2026-04-28T09:59:02.000Z",
+        type: "event_msg",
+        payload: {
+          type: "token_count",
+          info: {
+            total_token_usage: {
+              input_tokens: 1_000,
+              output_tokens: 100,
+              cached_input_tokens: 900,
+              cache_write_input_tokens: 20,
+              reasoning_output_tokens: 20,
+            },
+            last_token_usage: {
+              input_tokens: 100,
+              output_tokens: 10,
+              cached_input_tokens: 90,
+              cache_write_input_tokens: 2,
+              reasoning_output_tokens: 2,
+            },
+          },
+        },
+      },
+      {
+        timestamp: "2026-04-28T10:00:01.000Z",
+        type: "event_msg",
+        payload: { type: "task_started", started_at: 1_777_370_401 },
+      },
+      {
+        timestamp: "2026-04-28T10:00:02.000Z",
+        type: "response_item",
+        payload: {
+          type: "message",
+          role: "user",
+          content: [{ type: "input_text", text: "inspect this" }],
+        },
+      },
+      {
+        timestamp: "2026-04-28T10:00:03.000Z",
+        type: "event_msg",
+        payload: {
+          type: "token_count",
+          info: {
+            total_token_usage: {
+              input_tokens: 1_040,
+              output_tokens: 105,
+              cached_input_tokens: 930,
+              cache_write_input_tokens: 23,
+              reasoning_output_tokens: 22,
+            },
+            last_token_usage: {
+              input_tokens: 40,
+              output_tokens: 5,
+              cached_input_tokens: 30,
+              cache_write_input_tokens: 3,
+              reasoning_output_tokens: 2,
+            },
+          },
+        },
+      },
+      {
+        timestamp: "2026-04-28T10:00:04.000Z",
+        type: "event_msg",
+        payload: {
+          type: "token_count",
+          info: {
+            total_token_usage: {
+              input_tokens: 1_100,
+              output_tokens: 115,
+              cached_input_tokens: 980,
+              cache_write_input_tokens: 29,
+              reasoning_output_tokens: 26,
+            },
+            last_token_usage: {
+              input_tokens: 60,
+              output_tokens: 10,
+              cached_input_tokens: 50,
+              cache_write_input_tokens: 6,
+              reasoning_output_tokens: 4,
+            },
+          },
+        },
+      },
+      // Codex can persist the same token_count snapshot twice. It is one
+      // provider request and must contribute its last_token_usage only once.
+      {
+        timestamp: "2026-04-28T10:00:05.000Z",
+        type: "event_msg",
+        payload: {
+          type: "token_count",
+          info: {
+            total_token_usage: {
+              input_tokens: 1_100,
+              output_tokens: 115,
+              cached_input_tokens: 980,
+              cache_write_input_tokens: 29,
+              reasoning_output_tokens: 26,
+            },
+            last_token_usage: {
+              input_tokens: 60,
+              output_tokens: 10,
+              cached_input_tokens: 50,
+              cache_write_input_tokens: 6,
+              reasoning_output_tokens: 4,
+            },
+          },
+        },
+      },
+    ]);
+    try {
+      const result = await parseSessionFile(file);
+      expect(result.success).toBe(true);
+      if (!result.success) return;
+      const t = result.data.transcript;
+      expect(t.inputTokens).toBe(100);
+      expect(t.outputTokens).toBe(15);
+      expect(t.cacheReadTokens).toBe(80);
+      expect(t.cacheCreationTokens).toBe(9);
+      expect(t.reasoningTokens).toBe(6);
+    } finally {
+      cleanup();
+    }
+  });
+
+  it("omits cumulative-only fork usage even with a valid child boundary", async () => {
+    const { file, cleanup } = makeTempRollout([
+      {
+        timestamp: "2026-04-28T10:00:00.000Z",
+        type: "session_meta",
+        payload: {
+          id: "codex-total-only-child",
+          cwd: "/tmp",
+          parent_thread_id: "codex-total-only-parent",
+          thread_source: "subagent",
+        },
+      },
+      {
+        timestamp: "2026-04-28T10:00:00.000Z",
+        type: "session_meta",
+        payload: { id: "codex-total-only-parent", cwd: "/tmp" },
+      },
+      {
+        timestamp: "2026-04-28T10:00:00.000Z",
+        type: "event_msg",
+        payload: {
+          type: "token_count",
+          info: {
+            total_token_usage: {
+              input_tokens: 1_000,
+              output_tokens: 100,
+              cached_input_tokens: 900,
+            },
+          },
+        },
+      },
+      {
+        timestamp: "2026-04-28T10:00:01.000Z",
+        type: "event_msg",
+        payload: { type: "task_started", started_at: 1_777_370_401 },
+      },
+      {
+        timestamp: "2026-04-28T10:00:01.500Z",
+        type: "response_item",
+        payload: {
+          type: "message",
+          role: "user",
+          content: [{ type: "input_text", text: "count only this child" }],
+        },
+      },
+      {
+        timestamp: "2026-04-28T10:00:02.000Z",
+        type: "event_msg",
+        payload: {
+          type: "token_count",
+          info: {
+            total_token_usage: {
+              input_tokens: 1_100,
+              output_tokens: 110,
+              cached_input_tokens: 980,
+            },
+          },
+        },
+      },
+    ]);
+    try {
+      const result = await parseSessionFile(file);
+      expect(result.success).toBe(true);
+      if (!result.success) return;
+      expect(result.data.transcript.inputTokens).toBeUndefined();
+      expect(result.data.transcript.outputTokens).toBeUndefined();
+      expect(result.data.transcript.cacheReadTokens).toBeUndefined();
+      expect(result.issues).toContainEqual(
+        expect.objectContaining({
+          severity: "warning",
+          message: expect.stringContaining(
+            "request deltas or a reliable task boundary are missing",
+          ),
+        }),
+      );
+    } finally {
+      cleanup();
+    }
+  });
+
+  it("uses ordered task time without replay evidence when embedded time drifts", async () => {
+    const { file, cleanup } = makeTempRollout([
+      {
+        timestamp: "2026-04-28T10:00:00.000Z",
+        type: "session_meta",
+        payload: {
+          id: "codex-skewed-child",
+          cwd: "/tmp",
+          parent_thread_id: "codex-parent-001",
+        },
+      },
+      {
+        timestamp: "2026-04-28T10:00:01.000Z",
+        type: "event_msg",
+        // Captured child tasks without replay metadata can start two seconds
+        // before the truncated session timestamp; ordered time remains local.
+        payload: { type: "task_started", started_at: 1_777_370_398 },
+      },
+      {
+        timestamp: "2026-04-28T10:00:02.000Z",
+        type: "response_item",
+        payload: {
+          type: "message",
+          role: "user",
+          content: [{ type: "input_text", text: "count this child task" }],
+        },
+      },
+      {
+        timestamp: "2026-04-28T10:00:03.000Z",
+        type: "event_msg",
+        payload: {
+          type: "token_count",
+          info: {
+            total_token_usage: {
+              input_tokens: 1_040,
+              output_tokens: 105,
+              cached_input_tokens: 930,
+            },
+            last_token_usage: {
+              input_tokens: 40,
+              output_tokens: 5,
+              cached_input_tokens: 30,
+            },
+          },
+        },
+      },
+    ]);
+    try {
+      const result = await parseSessionFile(file);
+      expect(result.success).toBe(true);
+      if (!result.success) return;
+      expect(result.data.transcript.inputTokens).toBe(40);
+      expect(result.data.transcript.outputTokens).toBe(5);
+      expect(result.data.transcript.cacheReadTokens).toBe(30);
+      expect(result.issues).not.toContainEqual(
+        expect.objectContaining({
+          message: expect.stringContaining(
+            "request deltas or a reliable task boundary are missing",
+          ),
+        }),
+      );
+    } finally {
+      cleanup();
+    }
+  });
+
+  it("rejects replay whose top-level timestamp was rewritten to the child start", async () => {
+    const { file, cleanup } = makeTempRollout([
+      {
+        timestamp: "2026-04-28T10:00:00.000Z",
+        type: "session_meta",
+        payload: {
+          id: "codex-rewritten-replay-child",
+          cwd: "/tmp",
+          parent_thread_id: "codex-parent-001",
+        },
+      },
+      {
+        timestamp: "2026-04-28T10:00:00.000Z",
+        type: "session_meta",
+        payload: { id: "codex-parent-001", cwd: "/tmp" },
+      },
+      {
+        timestamp: "2026-04-28T10:00:00.000Z",
+        type: "event_msg",
+        payload: { type: "task_started", started_at: 1_777_369_000 },
+      },
+      {
+        timestamp: "2026-04-28T10:00:00.000Z",
+        type: "event_msg",
+        payload: {
+          type: "token_count",
+          info: {
+            total_token_usage: {
+              input_tokens: 50_000,
+              output_tokens: 5_000,
+              cached_input_tokens: 40_000,
+            },
+            last_token_usage: {
+              input_tokens: 10_000,
+              output_tokens: 1_000,
+              cached_input_tokens: 8_000,
+            },
+          },
+        },
+      },
+      {
+        timestamp: "2026-04-28T10:00:01.000Z",
+        type: "response_item",
+        payload: {
+          type: "message",
+          role: "user",
+          content: [{ type: "input_text", text: "current child prompt" }],
+        },
+      },
+    ]);
+    try {
+      const result = await parseSessionFile(file);
+      expect(result.success).toBe(true);
+      if (!result.success) return;
+      expect(result.data.transcript.inputTokens).toBeUndefined();
+      expect(result.data.transcript.outputTokens).toBeUndefined();
+      expect(result.data.transcript.cacheReadTokens).toBeUndefined();
+      expect(result.issues).toContainEqual(
+        expect.objectContaining({
+          message: expect.stringContaining(
+            "request deltas or a reliable task boundary are missing",
+          ),
+        }),
+      );
+    } finally {
+      cleanup();
+    }
+  });
+
+  it("does not collapse last-token deltas when cumulative totals are absent", async () => {
+    const { file, cleanup } = makeTempRollout([
+      {
+        timestamp: "2026-04-28T10:00:00.000Z",
+        type: "session_meta",
+        payload: { id: "codex-no-total-001", cwd: "/tmp" },
+      },
+      {
+        timestamp: "2026-04-28T10:00:00.001Z",
+        type: "event_msg",
+        payload: { type: "task_started", started_at: 1_777_370_401 },
+      },
+      {
+        timestamp: "2026-04-28T10:00:01.000Z",
+        type: "response_item",
+        payload: {
+          type: "message",
+          role: "user",
+          content: [{ type: "input_text", text: "count both requests" }],
+        },
+      },
+      ...["2026-04-28T10:00:02.000Z", "2026-04-28T10:00:03.000Z"].map(
+        (timestamp) => ({
+          timestamp,
+          type: "event_msg",
+          payload: {
+            type: "token_count",
+            info: {
+              total_token_usage: null,
+              last_token_usage: {
+                input_tokens: 10,
+                output_tokens: 2,
+                cached_input_tokens: 8,
+              },
+            },
+          },
+        }),
+      ),
+    ]);
+    try {
+      const result = await parseSessionFile(file);
+      expect(result.success).toBe(true);
+      if (!result.success) return;
+      expect(result.data.transcript.inputTokens).toBe(20);
+      expect(result.data.transcript.outputTokens).toBe(4);
+      expect(result.data.transcript.cacheReadTokens).toBe(16);
+    } finally {
+      cleanup();
+    }
+  });
+
+  it("omits inherited fork usage when the current task boundary is missing", async () => {
+    const { file, cleanup } = makeTempRollout([
+      {
+        timestamp: "2026-04-28T10:00:00.000Z",
+        type: "session_meta",
+        payload: {
+          id: "codex-child-without-boundary",
+          cwd: "/tmp",
+          parent_thread_id: "codex-parent-001",
+        },
+      },
+      {
+        timestamp: "2026-04-28T10:00:01.000Z",
+        type: "response_item",
+        payload: {
+          type: "message",
+          role: "user",
+          content: [{ type: "input_text", text: "inherited history" }],
+        },
+      },
+      {
+        timestamp: "2026-04-28T10:00:02.000Z",
+        type: "event_msg",
+        payload: {
+          type: "token_count",
+          info: {
+            total_token_usage: {
+              input_tokens: 50_000,
+              output_tokens: 5_000,
+              cached_input_tokens: 40_000,
+            },
+            last_token_usage: {
+              input_tokens: 10_000,
+              output_tokens: 1_000,
+              cached_input_tokens: 8_000,
+            },
+          },
+        },
+      },
+    ]);
+    try {
+      const result = await parseSessionFile(file);
+      expect(result.success).toBe(true);
+      if (!result.success) return;
+      expect(result.data.transcript.inputTokens).toBeUndefined();
+      expect(result.data.transcript.outputTokens).toBeUndefined();
+      expect(result.data.transcript.cacheReadTokens).toBeUndefined();
+      expect(result.issues).toContainEqual(
+        expect.objectContaining({
+          severity: "warning",
+          message: expect.stringContaining(
+            "request deltas or a reliable task boundary are missing",
+          ),
+        }),
+      );
+    } finally {
+      cleanup();
+    }
+  });
+
   it("flattens array-shaped function_call_output into text", async () => {
     const result = await parseSessionFile(FIXTURE);
     if (!result.success) throw new Error("parse failed");
