@@ -2,6 +2,13 @@
 
 Notable agent-canonical changes only. Detailed implementation notes belong in commit history.
 
+## 0.1.8 - 2026-08-03
+
+- Exclude inherited Codex token deltas when a forked rollout retains only the child's session
+  metadata but replays earlier task history with child-restamped event timestamps.
+- Omit aggregate token usage when a Codex session changes model instead of pricing every request as
+  the first model.
+
 ## 0.1.7 - 2026-08-02
 
 - Correct Codex usage accounting for forked sessions by summing current-task request deltas,
