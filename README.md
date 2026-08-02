@@ -24,6 +24,15 @@ declarations, one entry per subpath export — e.g.
   signals, config paths, capability flags, and an optional `validatedAgainst` provenance record (the
   CLI version(s) and store schema version a captured session confirmed the parser against). Zero
   dependencies.
+- `agent-canonical/materializers` — bounded Codex rollout-family discovery and deterministic
+  verbatim source plans. A family starts at one exact root rollout and contains every captured
+  transitive child linked by `parentSessionId`. Each selected JSONL file is limited to 64 MiB and
+  the complete family to 256 MiB. Unrelated rollouts do not consume the family byte budget. A
+  successful `spawn_agent` result without its child rollout fails closed, as do malformed JSONL
+  and orphan, reordered, or contradictory child-start records. Unknown but valid JSON records are
+  preserved. Token totals retain missing-field coverage by session ID instead of silently treating
+  missing values as zero. This version does not materialize Claude Code workflows, Cursor sessions,
+  or OpenCode databases.
 - `agent-canonical/parsers/<cli>` — one entry per CLI (claude-code, codex, opencode, cursor,
   gemini, qwen, kilo, goose, cline, copilot) turning that CLI's on-disk transcript store into a
   canonical
