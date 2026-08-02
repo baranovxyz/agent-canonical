@@ -130,12 +130,29 @@ const EventMsgTokenCountPayloadSchema = z.object({
           input_tokens: z.number().optional(),
           output_tokens: z.number().optional(),
           cached_input_tokens: z.number().optional(),
+          cache_write_input_tokens: z.number().optional(),
           reasoning_output_tokens: z.number().optional(),
         })
+        .nullable()
+        .optional(),
+      last_token_usage: z
+        .object({
+          input_tokens: z.number().optional(),
+          output_tokens: z.number().optional(),
+          cached_input_tokens: z.number().optional(),
+          cache_write_input_tokens: z.number().optional(),
+          reasoning_output_tokens: z.number().optional(),
+        })
+        .nullable()
         .optional(),
     })
     .nullable()
     .optional(),
+});
+
+const EventMsgTaskStartedPayloadSchema = z.object({
+  type: z.literal("task_started"),
+  started_at: z.number().optional(),
 });
 
 const EventMsgExecCommandEndPayloadSchema = z.object({
@@ -181,7 +198,19 @@ export type DecodedEventMsgTokenCount = {
   inputTokens: number | undefined;
   outputTokens: number | undefined;
   cachedInputTokens: number | undefined;
+  cacheWriteInputTokens: number | undefined;
   reasoningOutputTokens: number | undefined;
+  lastInputTokens: number | undefined;
+  lastOutputTokens: number | undefined;
+  lastCachedInputTokens: number | undefined;
+  lastCacheWriteInputTokens: number | undefined;
+  lastReasoningOutputTokens: number | undefined;
+};
+
+export type DecodedEventMsgTaskStarted = {
+  kind: "event_msg_task_started";
+  ts: number | undefined;
+  startedAt: number | undefined;
 };
 
 export type DecodedEventMsgExecCommandEnd = {
@@ -261,6 +290,7 @@ export type DecodedEvent =
   | DecodedSessionMeta
   | DecodedTurnContext
   | DecodedEventMsgTokenCount
+  | DecodedEventMsgTaskStarted
   | DecodedEventMsgExecCommandEnd
   | DecodedEventMsgTurnAborted
   | DecodedEventMsgTaskComplete
@@ -477,13 +507,30 @@ export function decodeLine(
         const r = EventMsgTokenCountPayloadSchema.safeParse(line.payload);
         if (!r.success) return { kind: "skip", ts };
         const usage = r.data.info?.total_token_usage;
+        const lastUsage = r.data.info?.last_token_usage;
         return {
           kind: "event_msg_token_count",
           ts,
           inputTokens: usage?.input_tokens,
           outputTokens: usage?.output_tokens,
           cachedInputTokens: usage?.cached_input_tokens,
+          cacheWriteInputTokens: usage?.cache_write_input_tokens,
           reasoningOutputTokens: usage?.reasoning_output_tokens,
+          lastInputTokens: lastUsage?.input_tokens,
+          lastOutputTokens: lastUsage?.output_tokens,
+          lastCachedInputTokens: lastUsage?.cached_input_tokens,
+          lastCacheWriteInputTokens: lastUsage?.cache_write_input_tokens,
+          lastReasoningOutputTokens: lastUsage?.reasoning_output_tokens,
+        };
+      }
+
+      if (subType === "task_started") {
+        const r = EventMsgTaskStartedPayloadSchema.safeParse(line.payload);
+        if (!r.success) return { kind: "skip", ts };
+        return {
+          kind: "event_msg_task_started",
+          ts,
+          startedAt: r.data.started_at,
         };
       }
 

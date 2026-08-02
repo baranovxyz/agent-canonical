@@ -28,6 +28,26 @@ interface PendingSlot {
   ownerIdx: number;
 }
 
+interface TokenUsage {
+  inputTokens: number | undefined;
+  outputTokens: number | undefined;
+  cachedInputTokens: number | undefined;
+  cacheWriteInputTokens: number | undefined;
+  reasoningOutputTokens: number | undefined;
+}
+
+interface IncrementalTokenSnapshot {
+  total: TokenUsage;
+  last: TokenUsage;
+}
+
+// Fork rollouts can rewrite every replayed event's top-level timestamp to the
+// child start while preserving the historical task_started.started_at value.
+// When different session metadata proves replay, trust only that embedded time
+// with a one-second precision allowance. Without replay evidence, ordered event
+// time can establish the boundary and tolerates larger embedded clock drift.
+const REPLAY_TASK_STARTED_CLOCK_SKEW_SECONDS = 1;
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -63,6 +83,16 @@ function canonicalCodexSessionId(id: string): string {
   return id.startsWith("cx--") ? id : `cx--${id}`;
 }
 
+function tokenUsageEquals(left: TokenUsage, right: TokenUsage): boolean {
+  return (
+    left.inputTokens === right.inputTokens &&
+    left.outputTokens === right.outputTokens &&
+    left.cachedInputTokens === right.cachedInputTokens &&
+    left.cacheWriteInputTokens === right.cacheWriteInputTokens &&
+    left.reasoningOutputTokens === right.reasoningOutputTokens
+  );
+}
+
 /**
  * function_call_output text may carry a header "Process exited with code N".
  * Returns undefined when the header is absent.
@@ -95,20 +125,34 @@ export interface ReduceResult {
   inputTokens: number | undefined;
   outputTokens: number | undefined;
   cacheReadTokens: number | undefined;
+  cacheCreationTokens: number | undefined;
   reasoningTokens: number | undefined;
   abortedTurns: number;
 }
 
 /**
  * Pure reducer. Consumes the full event stream in a single pass.
- * `_collector` is accepted for symmetry (future use for per-event warnings);
- * currently the decoder handles all per-line issues.
+ * Ambiguous fork token usage is omitted and reported through `collector`.
  */
 export function reduceEvents(
   events: DecodedEvent[],
   rawLines: string[],
-  _collector: IssueCollector,
+  collector: IssueCollector,
 ): ReduceResult {
+  let primaryMetadataId: string | undefined;
+  for (const event of events) {
+    if (event.kind === "session_meta" && event.id !== undefined) {
+      primaryMetadataId = event.id;
+      break;
+    }
+  }
+  const hasReplayedSessionMetadata = events.some(
+    (event) =>
+      event.kind === "session_meta" &&
+      event.id !== undefined &&
+      primaryMetadataId !== undefined &&
+      event.id !== primaryMetadataId,
+  );
   let sessionId: string | undefined;
   let directParentId: string | undefined;
   let projectPath: string | undefined;
@@ -116,6 +160,7 @@ export function reduceEvents(
   let agentType: string | undefined;
   let startedAt: number | undefined;
   let endedAt: number | undefined;
+  let primarySessionStartedAt: number | undefined;
 
   const messages: Message[] = [];
   const rawEvents: RawEvent[] = [];
@@ -126,15 +171,18 @@ export function reduceEvents(
   const toolCallByCallId = new Map<string, ToolCall>();
   const execEndExitByCallId = new Map<string, number>();
 
-  let lastTokenSnapshot:
-    | {
-        inputTokens: number | undefined;
-        outputTokens: number | undefined;
-        cachedInputTokens: number | undefined;
-        reasoningOutputTokens: number | undefined;
-      }
-    | undefined;
+  let lastTokenSnapshot: TokenUsage | undefined;
+  let currentSessionTaskStarted = false;
+  let sawTokenUsageFields = false;
+  let lastIncrementalTokenSnapshot: IncrementalTokenSnapshot | undefined;
+  let incrementalTokenUsage: TokenUsage | undefined;
   let abortedTurns = 0;
+
+  const addUsage = (
+    current: number | undefined,
+    next: number | undefined,
+  ): number | undefined =>
+    next === undefined ? current : (current ?? 0) + next;
 
   const attachToolCall = (tc: ToolCall, ownerIdx: number): void => {
     if (ownerIdx >= 0 && messages[ownerIdx] !== undefined) {
@@ -170,7 +218,10 @@ export function reduceEvents(
 
     switch (event.kind) {
       case "session_meta": {
-        if (sessionId === undefined) sessionId = event.id;
+        if (sessionId === undefined && event.id !== undefined) {
+          sessionId = event.id;
+          primarySessionStartedAt = event.ts;
+        }
         if (directParentId === undefined) directParentId = event.directParentId;
         if (projectPath === undefined) projectPath = event.cwd;
         if (agentType === undefined) agentType = event.agentType;
@@ -183,12 +234,90 @@ export function reduceEvents(
       }
 
       case "event_msg_token_count": {
-        lastTokenSnapshot = {
+        const currentTokenSnapshot = {
           inputTokens: event.inputTokens,
           outputTokens: event.outputTokens,
           cachedInputTokens: event.cachedInputTokens,
+          cacheWriteInputTokens: event.cacheWriteInputTokens,
           reasoningOutputTokens: event.reasoningOutputTokens,
         };
+        lastTokenSnapshot = currentTokenSnapshot;
+        const hasCurrentTokenSnapshot = Object.values(
+          currentTokenSnapshot,
+        ).some((value) => value !== undefined);
+        const currentLastUsage = {
+          inputTokens: event.lastInputTokens,
+          outputTokens: event.lastOutputTokens,
+          cachedInputTokens: event.lastCachedInputTokens,
+          cacheWriteInputTokens: event.lastCacheWriteInputTokens,
+          reasoningOutputTokens: event.lastReasoningOutputTokens,
+        };
+        const isDuplicateIncrementalSnapshot =
+          hasCurrentTokenSnapshot &&
+          lastIncrementalTokenSnapshot !== undefined &&
+          tokenUsageEquals(
+            currentTokenSnapshot,
+            lastIncrementalTokenSnapshot.total,
+          ) &&
+          tokenUsageEquals(currentLastUsage, lastIncrementalTokenSnapshot.last);
+        const hasLastUsage = Object.values(currentLastUsage).some(
+          (value) => value !== undefined,
+        );
+        if (hasCurrentTokenSnapshot || hasLastUsage) {
+          sawTokenUsageFields = true;
+        }
+        if (
+          currentSessionTaskStarted &&
+          !isDuplicateIncrementalSnapshot &&
+          hasLastUsage
+        ) {
+          incrementalTokenUsage = {
+            inputTokens: addUsage(
+              incrementalTokenUsage?.inputTokens,
+              event.lastInputTokens,
+            ),
+            outputTokens: addUsage(
+              incrementalTokenUsage?.outputTokens,
+              event.lastOutputTokens,
+            ),
+            cachedInputTokens: addUsage(
+              incrementalTokenUsage?.cachedInputTokens,
+              event.lastCachedInputTokens,
+            ),
+            cacheWriteInputTokens: addUsage(
+              incrementalTokenUsage?.cacheWriteInputTokens,
+              event.lastCacheWriteInputTokens,
+            ),
+            reasoningOutputTokens: addUsage(
+              incrementalTokenUsage?.reasoningOutputTokens,
+              event.lastReasoningOutputTokens,
+            ),
+          };
+        }
+        if (currentSessionTaskStarted && hasCurrentTokenSnapshot) {
+          lastIncrementalTokenSnapshot = {
+            total: currentTokenSnapshot,
+            last: currentLastUsage,
+          };
+        }
+        break;
+      }
+
+      case "event_msg_task_started": {
+        const earliestCurrentTaskStart =
+          primarySessionStartedAt === undefined
+            ? undefined
+            : primarySessionStartedAt - REPLAY_TASK_STARTED_CLOCK_SKEW_SECONDS;
+        const boundaryTimestamp = hasReplayedSessionMetadata
+          ? event.startedAt
+          : (event.ts ?? event.startedAt);
+        if (
+          earliestCurrentTaskStart !== undefined &&
+          boundaryTimestamp !== undefined &&
+          boundaryTimestamp >= earliestCurrentTaskStart
+        ) {
+          currentSessionTaskStarted = true;
+        }
         break;
       }
 
@@ -337,6 +466,19 @@ export function reduceEvents(
     });
   }
 
+  const ambiguousForkUsage =
+    incrementalTokenUsage === undefined &&
+    sawTokenUsageFields &&
+    (directParentId !== undefined || hasReplayedSessionMetadata);
+  if (ambiguousForkUsage) {
+    collector.warn(
+      "Codex token usage omitted because current-session request deltas or a reliable task boundary are missing",
+    );
+  }
+  const tokenUsage = ambiguousForkUsage
+    ? undefined
+    : (incrementalTokenUsage ?? lastTokenSnapshot);
+
   return {
     sessionId,
     directParentId,
@@ -347,10 +489,11 @@ export function reduceEvents(
     endedAt,
     messages,
     rawEvents,
-    inputTokens: lastTokenSnapshot?.inputTokens,
-    outputTokens: lastTokenSnapshot?.outputTokens,
-    cacheReadTokens: lastTokenSnapshot?.cachedInputTokens,
-    reasoningTokens: lastTokenSnapshot?.reasoningOutputTokens,
+    inputTokens: tokenUsage?.inputTokens,
+    outputTokens: tokenUsage?.outputTokens,
+    cacheReadTokens: tokenUsage?.cachedInputTokens,
+    cacheCreationTokens: tokenUsage?.cacheWriteInputTokens,
+    reasoningTokens: tokenUsage?.reasoningOutputTokens,
     abortedTurns,
   };
 }
@@ -402,6 +545,8 @@ export function assembleSession(
     session.transcript.outputTokens = result.outputTokens;
   if (result.cacheReadTokens !== undefined)
     session.transcript.cacheReadTokens = result.cacheReadTokens;
+  if (result.cacheCreationTokens !== undefined)
+    session.transcript.cacheCreationTokens = result.cacheCreationTokens;
   if (result.reasoningTokens !== undefined)
     session.transcript.reasoningTokens = result.reasoningTokens;
   if (result.abortedTurns > 0)
@@ -440,6 +585,7 @@ function kindToEventType(
     session_meta: "session_meta",
     turn_context: "turn_context",
     event_msg_token_count: "event_msg",
+    event_msg_task_started: "event_msg",
     event_msg_exec_command_end: "event_msg",
     event_msg_turn_aborted: "event_msg",
     event_msg_task_complete: "event_msg",
