@@ -2,6 +2,24 @@
 
 Notable agent-canonical changes only. Detailed implementation notes belong in commit history.
 
+## 0.2.1 - 2026-08-03
+
+- Combine the bounded Codex rollout-family materializer from 0.2.0 with the corrected fork token
+  accounting from 0.1.8, including aggregate cache-write token coverage, while preserving both
+  contracts on one monotonic release line.
+
+## 0.2.0 - 2026-07-31
+
+- Add the `/materializers` export for bounded Codex rollout-family discovery and deterministic
+  verbatim native JSONL projection. The collector anchors to one exact root rollout, follows
+  transitive `parentSessionId` edges, rejects missing successful spawns and changing selected
+  files, and fails closed on malformed JSONL or orphan, reordered, and contradictory child-start
+  evidence. Unknown but valid JSON records remain preserved. Unrelated session bytes are ignored;
+  each selected file is capped at 64 MiB and the family at 256 MiB.
+- Report aggregate token fields together with the exact session IDs that omitted each field, so a
+  consumer cannot mistake partial accounting for a complete total. Other CLI source materializers
+  and dynamic workflow semantics remain unsupported in this version.
+
 ## 0.1.8 - 2026-08-03
 
 - Exclude inherited Codex token deltas when a forked rollout retains only the child's session

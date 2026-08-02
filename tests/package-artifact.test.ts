@@ -1,5 +1,15 @@
 import { execFile } from "node:child_process";
-import { mkdir, mkdtemp, readdir, readFile, rm, stat } from "node:fs/promises";
+import {
+  copyFile,
+  cp,
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  rm,
+  stat,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -20,7 +30,7 @@ const exportTargetSchema = z
 const packedManifestSchema = z
   .object({
     name: z.literal("agent-canonical"),
-    version: z.literal("0.1.8"),
+    version: z.literal("0.2.1"),
     peerDependencies: z
       .object({
         zod: z.string(),
@@ -40,6 +50,10 @@ const expectedExports: Record<string, ExportTarget> = {
   "./dialects": {
     types: "./dist/dialects/index.d.ts",
     default: "./dist/dialects/index.js",
+  },
+  "./materializers": {
+    types: "./dist/materializers/index.d.ts",
+    default: "./dist/materializers/index.js",
   },
   "./parsers": {
     types: "./dist/parsers/index.d.ts",
@@ -128,10 +142,54 @@ describe("published package artifact", () => {
     tempDir = await mkdtemp(join(tmpdir(), "agent-canonical-package-"));
     const extractDir = join(tempDir, "extract");
 
-    await execFileAsync("pnpm", ["build"], { cwd: packageRoot });
-    await execFileAsync("pnpm", ["pack", "--pack-destination", tempDir], {
-      cwd: packageRoot,
+    await rm(join(packageRoot, "dist"), { recursive: true, force: true });
+    await execFileAsync(
+      process.execPath,
+      [
+        join(packageRoot, "node_modules", "typescript", "bin", "tsc"),
+        "--noEmit",
+      ],
+      { cwd: packageRoot },
+    );
+    await execFileAsync(
+      process.execPath,
+      [join(packageRoot, "node_modules", "tsup", "dist", "cli-default.js")],
+      { cwd: packageRoot },
+    );
+    const packRoot = join(tempDir, "pack-root");
+    await mkdir(packRoot);
+    await cp(join(packageRoot, "dist"), join(packRoot, "dist"), {
+      recursive: true,
     });
+    for (const name of ["README.md", "CHANGELOG.md"]) {
+      await copyFile(join(packageRoot, name), join(packRoot, name));
+    }
+    const sourceManifest = JSON.parse(
+      await readFile(join(packageRoot, "package.json"), "utf8"),
+    ) as Record<string, unknown> & {
+      publishConfig?: Record<string, unknown>;
+    };
+    await writeFile(
+      join(packRoot, "package.json"),
+      `${JSON.stringify(
+        { ...sourceManifest, ...sourceManifest.publishConfig },
+        null,
+        2,
+      )}\n`,
+    );
+    await execFileAsync(
+      "npm",
+      [
+        "pack",
+        packRoot,
+        "--ignore-scripts",
+        "--cache",
+        join(tempDir, "npm-cache"),
+        "--pack-destination",
+        tempDir,
+      ],
+      { cwd: packageRoot },
+    );
     const tarballs = (await readdir(tempDir)).filter((entry) =>
       entry.endsWith(".tgz"),
     );

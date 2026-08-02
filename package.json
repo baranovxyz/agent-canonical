@@ -8,7 +8,7 @@
     "zod": "4.4.3"
   },
   "name": "agent-canonical",
-  "version": "0.1.8",
+  "version": "0.2.1",
   "description": "Canonical session/transcript schemas and per-CLI transcript-format knowledge for AI coding agents (claude-code, codex, opencode, cursor, gemini, qwen, kilo, goose, cline, copilot)",
   "keywords": [
     "coding-agent",
@@ -42,6 +42,7 @@
   "exports": {
     "./schemas": "./src/schemas/index.ts",
     "./dialects": "./src/dialects/index.ts",
+    "./materializers": "./src/materializers/index.ts",
     "./parsers": "./src/parsers/index.ts",
     "./parsers/claude-code": "./src/parsers/claude-code/index.ts",
     "./parsers/codex": "./src/parsers/codex/index.ts",
@@ -85,6 +86,10 @@
       "./dialects": {
         "types": "./dist/dialects/index.d.ts",
         "default": "./dist/dialects/index.js"
+      },
+      "./materializers": {
+        "types": "./dist/materializers/index.d.ts",
+        "default": "./dist/materializers/index.js"
       },
       "./parsers": {
         "types": "./dist/parsers/index.d.ts",

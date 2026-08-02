@@ -18,6 +18,7 @@ export default defineConfig({
   entry: {
     "schemas/index": "src/schemas/index.ts",
     "dialects/index": "src/dialects/index.ts",
+    "materializers/index": "src/materializers/index.ts",
     "parsers/index": "src/parsers/index.ts",
     "parsers/claude-code/index": "src/parsers/claude-code/index.ts",
     "parsers/codex/index": "src/parsers/codex/index.ts",
