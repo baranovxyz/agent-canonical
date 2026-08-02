@@ -183,6 +183,7 @@ export type DecodedSessionMeta = {
   cwd: string | undefined;
   originator: string | undefined;
   directParentId: string | undefined;
+  forkedFromId: string | undefined;
   agentType: string | undefined;
 };
 
@@ -486,6 +487,7 @@ export function decodeLine(
         cwd: r.data.cwd,
         originator: r.data.originator,
         directParentId: lineage.directParentId,
+        forkedFromId: nonEmpty(r.data.forked_from_id),
         agentType: lineage.agentType,
       };
     }

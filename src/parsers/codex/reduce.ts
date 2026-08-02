@@ -139,13 +139,11 @@ export function reduceEvents(
   rawLines: string[],
   collector: IssueCollector,
 ): ReduceResult {
-  let primaryMetadataId: string | undefined;
-  for (const event of events) {
-    if (event.kind === "session_meta" && event.id !== undefined) {
-      primaryMetadataId = event.id;
-      break;
-    }
-  }
+  const primaryMetadata = events.find(
+    (event): event is Extract<DecodedEvent, { kind: "session_meta" }> =>
+      event.kind === "session_meta" && event.id !== undefined,
+  );
+  const primaryMetadataId = primaryMetadata?.id;
   const hasReplayedSessionMetadata = events.some(
     (event) =>
       event.kind === "session_meta" &&
@@ -153,10 +151,36 @@ export function reduceEvents(
       primaryMetadataId !== undefined &&
       event.id !== primaryMetadataId,
   );
+  const earliestCurrentTaskStart =
+    primaryMetadata?.ts === undefined
+      ? undefined
+      : primaryMetadata.ts - REPLAY_TASK_STARTED_CLOCK_SKEW_SECONDS;
+  const hasRestampedHistoricalTask = events.some(
+    (event) =>
+      event.kind === "event_msg_task_started" &&
+      event.startedAt !== undefined &&
+      earliestCurrentTaskStart !== undefined &&
+      event.startedAt < earliestCurrentTaskStart &&
+      event.ts === primaryMetadata?.ts,
+  );
+  // Newer fork serializers can retain only the child's session_meta while
+  // replaying parent task history with child-restamped top-level timestamps.
+  // An explicit fork source is sufficient evidence. For direct children that
+  // omit it, require the captured serialization defect itself: an embedded-old
+  // task whose ordered timestamp was rewritten to the primary metadata time.
+  // A captured current-task clock drift has a later ordered timestamp and is
+  // not mistaken for replay.
+  const hasSingleMetadataTaskReplay =
+    primaryMetadata?.directParentId !== undefined && hasRestampedHistoricalTask;
+  const hasReplayedHistory =
+    hasReplayedSessionMetadata ||
+    primaryMetadata?.forkedFromId !== undefined ||
+    hasSingleMetadataTaskReplay;
   let sessionId: string | undefined;
   let directParentId: string | undefined;
   let projectPath: string | undefined;
   let model: string | undefined;
+  let activeModel: string | undefined;
   let agentType: string | undefined;
   let startedAt: number | undefined;
   let endedAt: number | undefined;
@@ -176,6 +200,8 @@ export function reduceEvents(
   let sawTokenUsageFields = false;
   let lastIncrementalTokenSnapshot: IncrementalTokenSnapshot | undefined;
   let incrementalTokenUsage: TokenUsage | undefined;
+  const observedModels = new Set<string>();
+  const usageModels = new Set<string>();
   let abortedTurns = 0;
 
   const addUsage = (
@@ -230,6 +256,8 @@ export function reduceEvents(
 
       case "turn_context": {
         if (model === undefined && event.model) model = event.model;
+        activeModel = event.model;
+        if (event.model !== undefined) observedModels.add(event.model);
         break;
       }
 
@@ -271,6 +299,7 @@ export function reduceEvents(
           !isDuplicateIncrementalSnapshot &&
           hasLastUsage
         ) {
+          if (activeModel !== undefined) usageModels.add(activeModel);
           incrementalTokenUsage = {
             inputTokens: addUsage(
               incrementalTokenUsage?.inputTokens,
@@ -308,7 +337,7 @@ export function reduceEvents(
           primarySessionStartedAt === undefined
             ? undefined
             : primarySessionStartedAt - REPLAY_TASK_STARTED_CLOCK_SKEW_SECONDS;
-        const boundaryTimestamp = hasReplayedSessionMetadata
+        const boundaryTimestamp = hasReplayedHistory
           ? event.startedAt
           : (event.ts ?? event.startedAt);
         if (
@@ -469,21 +498,35 @@ export function reduceEvents(
   const ambiguousForkUsage =
     incrementalTokenUsage === undefined &&
     sawTokenUsageFields &&
-    (directParentId !== undefined || hasReplayedSessionMetadata);
+    (directParentId !== undefined || hasReplayedHistory);
   if (ambiguousForkUsage) {
     collector.warn(
       "Codex token usage omitted because current-session request deltas or a reliable task boundary are missing",
     );
   }
-  const tokenUsage = ambiguousForkUsage
-    ? undefined
-    : (incrementalTokenUsage ?? lastTokenSnapshot);
+  const applicableUsageModels =
+    incrementalTokenUsage === undefined ? observedModels : usageModels;
+  const ambiguousModelUsage =
+    sawTokenUsageFields && applicableUsageModels.size > 1;
+  if (ambiguousModelUsage) {
+    collector.warn(
+      "Codex token usage omitted because the session changes model and aggregate counters cannot be attributed safely",
+    );
+  }
+  const tokenUsage =
+    ambiguousForkUsage || ambiguousModelUsage
+      ? undefined
+      : (incrementalTokenUsage ?? lastTokenSnapshot);
+  const usageModel =
+    applicableUsageModels.size === 1
+      ? applicableUsageModels.values().next().value
+      : undefined;
 
   return {
     sessionId,
     directParentId,
     projectPath,
-    model,
+    model: usageModel ?? model,
     agentType,
     startedAt,
     endedAt,

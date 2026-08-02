@@ -461,6 +461,344 @@ describe("codex parser — core behavior", () => {
     }
   });
 
+  it("excludes replay when a direct child retains only its own metadata", async () => {
+    const { file, cleanup } = makeTempRollout([
+      {
+        timestamp: "2026-04-28T10:00:00.000Z",
+        type: "session_meta",
+        payload: {
+          id: "codex-single-meta-child",
+          cwd: "/tmp",
+          parent_thread_id: "codex-single-meta-parent",
+          thread_source: "subagent",
+        },
+      },
+      {
+        // The serializer rewrote the parent event's ordered timestamp to the
+        // child start but retained its earlier embedded task time.
+        timestamp: "2026-04-28T10:00:00.000Z",
+        type: "event_msg",
+        payload: { type: "task_started", started_at: 1_777_369_000 },
+      },
+      {
+        timestamp: "2026-04-28T10:00:00.000Z",
+        type: "event_msg",
+        payload: {
+          type: "token_count",
+          info: {
+            total_token_usage: { input_tokens: 1_000, output_tokens: 100 },
+            last_token_usage: { input_tokens: 100, output_tokens: 10 },
+          },
+        },
+      },
+      {
+        timestamp: "2026-04-28T10:00:01.000Z",
+        type: "event_msg",
+        payload: { type: "task_started", started_at: 1_777_370_401 },
+      },
+      {
+        timestamp: "2026-04-28T10:00:02.000Z",
+        type: "response_item",
+        payload: {
+          type: "message",
+          role: "user",
+          content: [{ type: "input_text", text: "current child task" }],
+        },
+      },
+      {
+        timestamp: "2026-04-28T10:00:03.000Z",
+        type: "event_msg",
+        payload: {
+          type: "token_count",
+          info: {
+            total_token_usage: { input_tokens: 1_040, output_tokens: 105 },
+            last_token_usage: { input_tokens: 40, output_tokens: 5 },
+          },
+        },
+      },
+    ]);
+    try {
+      const result = await parseSessionFile(file);
+      expect(result.success).toBe(true);
+      if (!result.success) return;
+      expect(result.data.transcript.inputTokens).toBe(40);
+      expect(result.data.transcript.outputTokens).toBe(5);
+    } finally {
+      cleanup();
+    }
+  });
+
+  it("uses forked_from_id for accounting without inventing lineage", async () => {
+    const { file, cleanup } = makeTempRollout([
+      {
+        timestamp: "2026-04-28T10:00:00.000Z",
+        type: "session_meta",
+        payload: {
+          id: "codex-user-fork",
+          cwd: "/tmp",
+          forked_from_id: "codex-user-parent",
+          thread_source: "user",
+        },
+      },
+      {
+        timestamp: "2026-04-28T10:00:00.000Z",
+        type: "event_msg",
+        payload: { type: "task_started", started_at: 1_777_369_000 },
+      },
+      {
+        timestamp: "2026-04-28T10:00:00.000Z",
+        type: "event_msg",
+        payload: {
+          type: "token_count",
+          info: {
+            total_token_usage: { input_tokens: 1_000, output_tokens: 100 },
+            last_token_usage: { input_tokens: 100, output_tokens: 10 },
+          },
+        },
+      },
+      {
+        timestamp: "2026-04-28T10:00:01.000Z",
+        type: "event_msg",
+        payload: { type: "task_started", started_at: 1_777_370_401 },
+      },
+      {
+        timestamp: "2026-04-28T10:00:02.000Z",
+        type: "response_item",
+        payload: {
+          type: "message",
+          role: "user",
+          content: [{ type: "input_text", text: "current user fork task" }],
+        },
+      },
+      {
+        timestamp: "2026-04-28T10:00:03.000Z",
+        type: "event_msg",
+        payload: {
+          type: "token_count",
+          info: {
+            total_token_usage: { input_tokens: 1_040, output_tokens: 105 },
+            last_token_usage: { input_tokens: 40, output_tokens: 5 },
+          },
+        },
+      },
+    ]);
+    try {
+      const result = await parseSessionFile(file);
+      expect(result.success).toBe(true);
+      if (!result.success) return;
+      expect(result.data.parentSessionId).toBeUndefined();
+      expect(result.data.transcript.inputTokens).toBe(40);
+      expect(result.data.transcript.outputTokens).toBe(5);
+    } finally {
+      cleanup();
+    }
+  });
+
+  it("omits explicit user-fork usage without a reliable current boundary", async () => {
+    const { file, cleanup } = makeTempRollout([
+      {
+        timestamp: "2026-04-28T10:00:00.000Z",
+        type: "session_meta",
+        payload: {
+          id: "codex-ambiguous-user-fork",
+          cwd: "/tmp",
+          forked_from_id: "codex-user-parent",
+          thread_source: "user",
+        },
+      },
+      {
+        timestamp: "2026-04-28T10:00:01.000Z",
+        type: "response_item",
+        payload: {
+          type: "message",
+          role: "user",
+          content: [{ type: "input_text", text: "ambiguous fork history" }],
+        },
+      },
+      {
+        timestamp: "2026-04-28T10:00:02.000Z",
+        type: "event_msg",
+        payload: {
+          type: "token_count",
+          info: {
+            total_token_usage: { input_tokens: 1_000, output_tokens: 100 },
+            last_token_usage: { input_tokens: 100, output_tokens: 10 },
+          },
+        },
+      },
+    ]);
+    try {
+      const result = await parseSessionFile(file);
+      expect(result.success).toBe(true);
+      if (!result.success) return;
+      expect(result.data.parentSessionId).toBeUndefined();
+      expect(result.data.transcript.inputTokens).toBeUndefined();
+      expect(result.data.transcript.outputTokens).toBeUndefined();
+      expect(result.issues).toContainEqual(
+        expect.objectContaining({
+          message: expect.stringContaining(
+            "request deltas or a reliable task boundary are missing",
+          ),
+        }),
+      );
+    } finally {
+      cleanup();
+    }
+  });
+
+  it("omits aggregate usage when a session changes model", async () => {
+    const { file, cleanup } = makeTempRollout([
+      {
+        timestamp: "2026-04-28T10:00:00.000Z",
+        type: "session_meta",
+        payload: { id: "codex-model-switch", cwd: "/tmp" },
+      },
+      {
+        timestamp: "2026-04-28T10:00:00.100Z",
+        type: "event_msg",
+        payload: { type: "task_started", started_at: 1_777_370_400 },
+      },
+      {
+        timestamp: "2026-04-28T10:00:01.000Z",
+        type: "turn_context",
+        payload: { model: "gpt-5.5" },
+      },
+      {
+        timestamp: "2026-04-28T10:00:02.000Z",
+        type: "response_item",
+        payload: {
+          type: "message",
+          role: "user",
+          content: [{ type: "input_text", text: "switch model" }],
+        },
+      },
+      {
+        timestamp: "2026-04-28T10:00:03.000Z",
+        type: "event_msg",
+        payload: {
+          type: "token_count",
+          info: {
+            total_token_usage: { input_tokens: 100, output_tokens: 10 },
+            last_token_usage: { input_tokens: 100, output_tokens: 10 },
+          },
+        },
+      },
+      {
+        timestamp: "2026-04-28T10:00:04.000Z",
+        type: "turn_context",
+        payload: { model: "gpt-5.6-sol" },
+      },
+      {
+        timestamp: "2026-04-28T10:00:05.000Z",
+        type: "event_msg",
+        payload: {
+          type: "token_count",
+          info: {
+            total_token_usage: { input_tokens: 140, output_tokens: 15 },
+            last_token_usage: { input_tokens: 40, output_tokens: 5 },
+          },
+        },
+      },
+    ]);
+    try {
+      const result = await parseSessionFile(file);
+      expect(result.success).toBe(true);
+      if (!result.success) return;
+      expect(result.data.model).toBe("gpt-5.5");
+      expect(result.data.transcript.inputTokens).toBeUndefined();
+      expect(result.data.transcript.outputTokens).toBeUndefined();
+      expect(result.issues).toContainEqual(
+        expect.objectContaining({
+          message: expect.stringContaining("session changes model"),
+        }),
+      );
+    } finally {
+      cleanup();
+    }
+  });
+
+  it("attributes fork usage to the current model instead of the replayed parent model", async () => {
+    const { file, cleanup } = makeTempRollout([
+      {
+        timestamp: "2026-04-28T10:00:00.000Z",
+        type: "session_meta",
+        payload: {
+          id: "codex-child-model",
+          cwd: "/tmp",
+          parent_thread_id: "codex-parent-model",
+          forked_from_id: "codex-parent-model",
+          thread_source: "subagent",
+        },
+      },
+      {
+        timestamp: "2026-04-28T10:00:00.000Z",
+        type: "turn_context",
+        payload: { model: "parent-model" },
+      },
+      {
+        timestamp: "2026-04-28T10:00:00.000Z",
+        type: "event_msg",
+        payload: { type: "task_started", started_at: 1_777_369_000 },
+      },
+      {
+        timestamp: "2026-04-28T10:00:00.000Z",
+        type: "event_msg",
+        payload: {
+          type: "token_count",
+          info: {
+            total_token_usage: { input_tokens: 1_000, output_tokens: 100 },
+            last_token_usage: { input_tokens: 100, output_tokens: 10 },
+          },
+        },
+      },
+      {
+        timestamp: "2026-04-28T10:00:01.000Z",
+        type: "event_msg",
+        payload: { type: "task_started", started_at: 1_777_370_401 },
+      },
+      {
+        timestamp: "2026-04-28T10:00:02.000Z",
+        type: "turn_context",
+        payload: { model: "child-model" },
+      },
+      {
+        timestamp: "2026-04-28T10:00:03.000Z",
+        type: "response_item",
+        payload: {
+          type: "message",
+          role: "user",
+          content: [{ type: "input_text", text: "current child model" }],
+        },
+      },
+      {
+        timestamp: "2026-04-28T10:00:04.000Z",
+        type: "event_msg",
+        payload: {
+          type: "token_count",
+          info: {
+            total_token_usage: { input_tokens: 1_040, output_tokens: 105 },
+            last_token_usage: { input_tokens: 40, output_tokens: 5 },
+          },
+        },
+      },
+    ]);
+    try {
+      const result = await parseSessionFile(file);
+      expect(result.success).toBe(true);
+      if (!result.success) return;
+      expect(result.data.model).toBe("child-model");
+      expect(result.data.transcript.inputTokens).toBe(40);
+      expect(result.data.transcript.outputTokens).toBe(5);
+      expect(result.issues).not.toContainEqual(
+        expect.objectContaining({
+          message: expect.stringContaining("session changes model"),
+        }),
+      );
+    } finally {
+      cleanup();
+    }
+  });
+
   it("omits cumulative-only fork usage even with a valid child boundary", async () => {
     const { file, cleanup } = makeTempRollout([
       {
