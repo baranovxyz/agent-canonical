@@ -1,0 +1,497 @@
+{
+  "sessions": [
+    {
+      "sessionId": "pi_fixture_1",
+      "cwdSlug": "--home-u-project--",
+      "fileName": "2026-01-01T00-00-00-000Z_pi_fixture_1.jsonl",
+      "entries": [
+        {
+          "type": "session",
+          "version": 3,
+          "id": "pi_fixture_1",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "cwd": "/home/u/project"
+        },
+        {
+          "type": "model_change",
+          "id": "a1000001",
+          "parentId": null,
+          "timestamp": "2026-01-01T00:00:00.210Z",
+          "provider": "provider-placeholder",
+          "modelId": "model-placeholder"
+        },
+        {
+          "type": "thinking_level_change",
+          "id": "a1000002",
+          "parentId": "a1000001",
+          "timestamp": "2026-01-01T00:00:00.211Z",
+          "thinkingLevel": "medium"
+        },
+        {
+          "type": "message",
+          "id": "a1000003",
+          "parentId": "a1000002",
+          "timestamp": "2026-01-01T00:00:12.941Z",
+          "message": {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "In one sentence: what is the capital of Iceland?"
+              }
+            ],
+            "timestamp": 1767225612937
+          }
+        },
+        {
+          "type": "message",
+          "id": "a1000004",
+          "parentId": "a1000003",
+          "timestamp": "2026-01-01T00:00:16.224Z",
+          "message": {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "thinking",
+                "thinking": "User asks: \"In one sentence: what is the capital of Iceland?\" Just answer: \"The capital of Iceland is Reykjavik.\"",
+                "thinkingSignature": "reasoning"
+              },
+              {
+                "type": "text",
+                "text": "The capital of Iceland is Reykjavík."
+              }
+            ],
+            "api": "openai-completions",
+            "provider": "provider-placeholder",
+            "model": "model-placeholder",
+            "usage": {
+              "input": 1099,
+              "output": 44,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "reasoning": 27,
+              "totalTokens": 1143,
+              "cost": {
+                "input": 0,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 0
+              }
+            },
+            "stopReason": "stop",
+            "timestamp": 1767225613050,
+            "responseId": "response-placeholder-1",
+            "rawStopReason": "stop"
+          }
+        },
+        {
+          "type": "message",
+          "id": "a1000005",
+          "parentId": "a1000004",
+          "timestamp": "2026-01-01T00:00:49.966Z",
+          "message": {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "Create a file hello.txt containing hi, then run ls -la and tell me what you see."
+              }
+            ],
+            "timestamp": 1767225649961
+          }
+        },
+        {
+          "type": "message",
+          "id": "a1000006",
+          "parentId": "a1000005",
+          "timestamp": "2026-01-01T00:00:54.081Z",
+          "message": {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "thinking",
+                "thinking": "We need to create hello.txt with content \"hi\". Then run ls -la. Use write to create file. Then bash to run ls -la.",
+                "thinkingSignature": "reasoning"
+              },
+              {
+                "type": "toolCall",
+                "id": "call_fixture_1",
+                "name": "write",
+                "arguments": {
+                  "content": "hi",
+                  "path": "hello.txt"
+                }
+              }
+            ],
+            "api": "openai-completions",
+            "provider": "provider-placeholder",
+            "model": "model-placeholder",
+            "usage": {
+              "input": 1136,
+              "output": 59,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "reasoning": 31,
+              "totalTokens": 1195,
+              "cost": {
+                "input": 0,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 0
+              }
+            },
+            "stopReason": "toolUse",
+            "timestamp": 1767225649970,
+            "responseId": "response-placeholder-2",
+            "rawStopReason": "tool_calls"
+          }
+        },
+        {
+          "type": "message",
+          "id": "a1000007",
+          "parentId": "a1000006",
+          "timestamp": "2026-01-01T00:00:54.091Z",
+          "message": {
+            "role": "toolResult",
+            "toolCallId": "call_fixture_1",
+            "toolName": "write",
+            "content": [
+              {
+                "type": "text",
+                "text": "Successfully wrote 2 bytes to hello.txt"
+              }
+            ],
+            "isError": false,
+            "timestamp": 1767225654091
+          }
+        },
+        {
+          "type": "message",
+          "id": "a1000008",
+          "parentId": "a1000007",
+          "timestamp": "2026-01-01T00:00:59.434Z",
+          "message": {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "thinking",
+                "thinking": "Now run ls -la.",
+                "thinkingSignature": "reasoning"
+              },
+              {
+                "type": "toolCall",
+                "id": "call_fixture_2",
+                "name": "bash",
+                "arguments": {
+                  "command": "ls -la"
+                }
+              }
+            ],
+            "api": "openai-completions",
+            "provider": "provider-placeholder",
+            "model": "model-placeholder",
+            "usage": {
+              "input": 1216,
+              "output": 31,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "reasoning": 6,
+              "totalTokens": 1247,
+              "cost": {
+                "input": 0,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 0
+              }
+            },
+            "stopReason": "toolUse",
+            "timestamp": 1767225654093,
+            "responseId": "response-placeholder-3",
+            "rawStopReason": "tool_calls"
+          }
+        },
+        {
+          "type": "message",
+          "id": "a1000009",
+          "parentId": "a1000008",
+          "timestamp": "2026-01-01T00:00:59.456Z",
+          "message": {
+            "role": "toolResult",
+            "toolCallId": "call_fixture_2",
+            "toolName": "bash",
+            "content": [
+              {
+                "type": "text",
+                "text": "total 20\ndrwxrwxr-x  3 u u 4096 Jan  1 00:00 .\ndrwxr-x--- 30 u u 4096 Jan  1 00:00 ..\ndrwxrwxr-x  8 u u 4096 Jan  1 00:00 .git\n-rw-rw-r--  1 u u    2 Jan  1 00:00 hello.txt\n-rwxrwxr-x  1 u u  146 Jan  1 00:00 notes.md\n"
+              }
+            ],
+            "isError": false,
+            "timestamp": 1767225659456
+          }
+        },
+        {
+          "type": "message",
+          "id": "a100000a",
+          "parentId": "a1000009",
+          "timestamp": "2026-01-01T00:01:05.386Z",
+          "message": {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "Here’s the output of `ls -la` after creating `hello.txt`:\n\n```\ntotal 20\ndrwxrwxr-x  3 u u 4096 Jan  1 00:00 .\ndrwxr-x--- 30 u u 4096 Jan  1 00:00 ..\ndrwxrwxr-x  8 u u 4096 Jan  1 00:00 .git\n-rw-rw-r--  1 u u    2 Jan  1 00:00 hello.txt\n-rwxrwxr-x  1 u u  146 Jan  1 00:00 notes.md\n```"
+              }
+            ],
+            "api": "openai-completions",
+            "provider": "provider-placeholder",
+            "model": "model-placeholder",
+            "usage": {
+              "input": 1398,
+              "output": 158,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "reasoning": 0,
+              "totalTokens": 1556,
+              "cost": {
+                "input": 0,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 0
+              }
+            },
+            "stopReason": "stop",
+            "timestamp": 1767225659457,
+            "responseId": "response-placeholder-4",
+            "rawStopReason": "stop"
+          }
+        },
+        {
+          "type": "model_change",
+          "id": "a100000b",
+          "parentId": "a100000a",
+          "timestamp": "2026-01-01T00:02:01.816Z",
+          "provider": "provider-placeholder",
+          "modelId": "model-placeholder-2"
+        },
+        {
+          "type": "message",
+          "id": "a100000c",
+          "parentId": "a100000b",
+          "timestamp": "2026-01-01T00:02:12.597Z",
+          "message": {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "Think step by step: if a train leaves at 14:20 and the trip takes 95 minutes, what time does it arrive? Answer briefly."
+              }
+            ],
+            "timestamp": 1767225732583
+          }
+        },
+        {
+          "type": "message",
+          "id": "a100000d",
+          "parentId": "a100000c",
+          "timestamp": "2026-01-01T00:02:14.016Z",
+          "message": {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "thinking",
+                "thinking": "We need to compute arrival time: start 14:20 + 95 minutes = 14:20 + 1 hour = 15:20, plus 35 minutes = 15:55. Answer briefly: \"15:55\" or \"3:55 PM\". Probably in 24-hour format: 15:55.\n\n",
+                "thinkingSignature": "reasoning"
+              },
+              {
+                "type": "text",
+                "text": "15:55"
+              }
+            ],
+            "api": "openai-completions",
+            "provider": "provider-placeholder",
+            "model": "model-placeholder-2",
+            "usage": {
+              "input": 2220,
+              "output": 92,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "reasoning": 47,
+              "totalTokens": 2312,
+              "cost": {
+                "input": 0,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 0
+              }
+            },
+            "stopReason": "stop",
+            "timestamp": 1767225732609,
+            "responseId": "response-placeholder-5",
+            "rawStopReason": "stop"
+          }
+        },
+        {
+          "type": "message",
+          "id": "a100000e",
+          "parentId": "a1000002",
+          "timestamp": "2026-01-01T00:09:16.294Z",
+          "message": {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "In one sentence: what is the capital of Norway?"
+              }
+            ],
+            "timestamp": 1767226156289
+          }
+        },
+        {
+          "type": "message",
+          "id": "a100000f",
+          "parentId": "a100000e",
+          "timestamp": "2026-01-01T00:09:24.590Z",
+          "message": {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "thinking",
+                "thinking": "User asks: \"In one sentence: what is the capital of Norway?\" Just answer.",
+                "thinkingSignature": "reasoning"
+              },
+              {
+                "type": "text",
+                "text": "The capital of Norway is Oslo."
+              }
+            ],
+            "api": "openai-completions",
+            "provider": "provider-placeholder",
+            "model": "model-placeholder",
+            "usage": {
+              "input": 1099,
+              "output": 35,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "reasoning": 18,
+              "totalTokens": 1134,
+              "cost": {
+                "input": 0,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 0
+              }
+            },
+            "stopReason": "stop",
+            "timestamp": 1767226156309,
+            "responseId": "response-placeholder-6",
+            "rawStopReason": "stop"
+          }
+        },
+        {
+          "type": "message",
+          "id": "a1000010",
+          "parentId": "a100000f",
+          "timestamp": "2026-01-01T00:10:57.283Z",
+          "message": {
+            "role": "bashExecution",
+            "command": "echo hello-from-pi-bash",
+            "output": "hello-from-pi-bash\n",
+            "exitCode": 0,
+            "cancelled": false,
+            "truncated": false,
+            "timestamp": 1767226257282,
+            "excludeFromContext": false
+          }
+        },
+        {
+          "type": "session_info",
+          "id": "a1000011",
+          "parentId": "a1000010",
+          "timestamp": "2026-01-01T00:11:05.284Z",
+          "name": "pi-session-demo"
+        }
+      ]
+    },
+    {
+      "sessionId": "pi_fixture_2",
+      "cwdSlug": "--home-u-project--",
+      "fileName": "2026-01-01T01-00-00-000Z_pi_fixture_2.jsonl",
+      "entries": [
+        {
+          "type": "session",
+          "version": 3,
+          "id": "pi_fixture_2",
+          "timestamp": "2026-01-01T01:00:00.000Z",
+          "cwd": "/home/u/project"
+        },
+        {
+          "type": "model_change",
+          "id": "b1000001",
+          "parentId": null,
+          "timestamp": "2026-01-01T01:00:00.052Z",
+          "provider": "provider-placeholder",
+          "modelId": "model-placeholder"
+        },
+        {
+          "type": "thinking_level_change",
+          "id": "b1000002",
+          "parentId": "b1000001",
+          "timestamp": "2026-01-01T01:00:00.053Z",
+          "thinkingLevel": "off"
+        },
+        {
+          "type": "message",
+          "id": "b1000003",
+          "parentId": "b1000002",
+          "timestamp": "2026-01-01T01:00:20.779Z",
+          "message": {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "In one sentence: what is the capital of Iceland?"
+              }
+            ],
+            "timestamp": 1767229220767
+          }
+        },
+        {
+          "type": "message",
+          "id": "b1000004",
+          "parentId": "b1000003",
+          "timestamp": "2026-01-01T01:00:21.489Z",
+          "message": {
+            "role": "assistant",
+            "content": [],
+            "api": "openai-completions",
+            "provider": "provider-placeholder",
+            "model": "model-placeholder",
+            "usage": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "totalTokens": 0,
+              "cost": {
+                "input": 0,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 0
+              }
+            },
+            "stopReason": "error",
+            "timestamp": 1767229220962,
+            "errorMessage": "402: {\"message\":\"Insufficient credits. Add more using https://provider-placeholder.example/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"provider_credits\",\"remedy_hint\":\"Add credits at https://provider-placeholder.example/settings/credits, or lower max_tokens / prompt size to fit your remaining balance.\"}}"
+          }
+        }
+      ]
+    }
+  ]
+}

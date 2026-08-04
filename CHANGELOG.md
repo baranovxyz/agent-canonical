@@ -2,6 +2,65 @@
 
 Notable agent-canonical changes only. Detailed implementation notes belong in commit history.
 
+## 0.3.0 - 2026-08-04
+
+- Added a `/parsers/vibe` entry for Mistral Vibe (`mistral-vibe` on PyPI, binary `vibe`). Vibe
+  writes each session as a DIRECTORY under `~/.vibe/logs/session/`, named
+  `<prefix>_<YYYYmmdd_HHMMSS>_<first-8-of-uuid>`, holding `messages.jsonl` (one raw OpenAI
+  chat-completions message per line, dumped with `exclude_none`) and `meta.json` (the sidecar,
+  rewritten atomically after every turn). `parseSessionFile` accepts either the directory or its
+  `messages.jsonl`. Reasoning is INLINE on the assistant record (`reasoning_content`), so it becomes
+  its own `thinking` message ahead of that record's reply; a tool call is an assistant record whose
+  `function.arguments` is a JSON string, correlated to a later `role:"tool"` record by
+  `tool_call_id`. A call the user refused is a tool record with the `tool_result` key ABSENT and
+  `content` set to `<user_cancellation>User cancelled the operation.</user_cancellation>` — kept as
+  a cancelled call carrying that text, with `exitCode` 1. `exitCode` is otherwise set only from a
+  `bash` result's `returncode`, the one status the store states. NOTHING in `messages.jsonl` carries
+  a timestamp, a token count, or a model, so `Message.ts` is left unset rather than back-filled, and
+  session identity, timing, cwd, git branch, cumulative tokens, and model all come from `meta.json`
+  — the model via `config.active_model` (an alias) resolved through `config.models[<alias>].name`.
+  Turn end is derived (an assistant record with content and no `tool_calls`) and never sets a
+  session status: the sidecar is rewritten every turn and an API-errored turn persists nothing at
+  all. Incremental reading is unavailable despite the JSONL shape — the writer takes a full-file
+  rewrite path for a rewind or an edited tail. Validated against Vibe 2.23.3 (the store carries no
+  schema or format version field).
+- Added a `/parsers/droid` entry for Factory Droid (binary `droid`). Droid writes each session as
+  two sibling files under `~/.factory/sessions/<dash-slug-cwd>/`: an appended `<uuid>.jsonl` and a
+  `<uuid>.settings.json` (a byte-identical `.settings.json.bak` sits beside it and is ignored). The
+  JSONL has three line envelopes — `session_start` (line 1, no timestamp), `message`
+  (`{id, timestamp, message, parentId?}`), and `agent_turn_outcome`
+  (`{turnId, reason, resultKind}`, no timestamp), which makes turn end explicit on disk. Message
+  content is Anthropic Messages-API shaped (`thinking` / `text` / `tool_use` / `tool_result`), so
+  `thinking` becomes its own message and a tool result on a later user message correlates to its
+  call by `tool_use_id`. A `visibility` field splits the single message stream three ways: the
+  conversation, the `llm_only` system-reminder bundle Droid injects ahead of each user turn (dropped
+  from canonical messages, kept verbatim in `rawEvents`), and `user_only` notices shown to the human
+  but never sent to the model (kept as `system` messages). A trailing `agent_turn_outcome` of
+  `reason:"error"` marks the session `failed`; a trailing `completed` sets no status. There is no
+  per-message usage — totals come from the settings file's `tokenUsage`, deliberately not the
+  child-inclusive rollup — and `model` is an alias (`custom:<displayName>-<index>` under BYOK),
+  reported as recorded because the upstream slug is not in the store. Validated against Droid
+  0.187.0 (`session_start.version` 2).
+- Added a `/parsers/pi` entry for Pi (`@earendil-works/pi-coding-agent`, binary `pi`). Pi writes one
+  append-only JSONL file per session at
+  `~/.pi/agent/sessions/<cwd-slug>/<ISO-timestamp>_<uuidv7>.jsonl`, with `--continue` appending to
+  the same file. Line 1 is the header `{type:"session", version, id, timestamp, cwd}`; every later
+  line is an entry `{type, id, parentId, timestamp}` — `message`, `model_change`,
+  `thinking_level_change`, `session_info` (the only title source), `compaction`, `branch_summary`,
+  `label`, `custom`, `custom_message`. A `message` entry nests an AgentMessage whose role is `user`,
+  `assistant`, `toolResult`, or `bashExecution`; assistant content blocks are
+  `thinking` / `text` / `toolCall` (with `arguments` already an object), and tool results are
+  separate entries correlated by `toolCallId`. `thinking` becomes its own message, and the TUI's
+  `!cmd` shell escape (`bashExecution`) becomes a user message carrying a synthetic `pi_bash` tool
+  call. Entries form a branching DAG (`id`/`parentId`); the reducer keeps every entry in file order,
+  as the claude-code parser does, so an abandoned branch is still accounted for, and the full chain
+  stays verbatim in `rawEvents`. Usage is per assistant message
+  (`{input, output, cacheRead, cacheWrite, reasoning, totalTokens, cost}`) with no session
+  aggregate, so transcript totals are summed; `cost` has no canonical field and survives only in
+  `rawEvents`. Turn-end is explicit (`stopReason ∈ stop | length | toolUse | error | aborted`), and
+  an errored turn keeps its `errorMessage` as a system message with `status:"failed"`. Validated
+  against Pi 0.83.0 (store `version` 3).
+
 ## 0.2.1 - 2026-08-03
 
 - Combine the bounded Codex rollout-family materializer from 0.2.0 with the corrected fork token

@@ -10,12 +10,15 @@ import { cline } from "./cline.js";
 import { codex } from "./codex.js";
 import { copilot } from "./copilot.js";
 import { cursor } from "./cursor.js";
+import { droid } from "./droid.js";
 import { gemini } from "./gemini.js";
 import { goose } from "./goose.js";
 import { kilo } from "./kilo.js";
 import { opencode } from "./opencode.js";
+import { pi } from "./pi.js";
 import { qwen } from "./qwen.js";
 import type { DialectDescriptor } from "./types.js";
+import { vibe } from "./vibe.js";
 
 export const DIALECTS: Readonly<Record<CliKind, DialectDescriptor>> = {
   "claude-code": claudeCode,
@@ -28,6 +31,9 @@ export const DIALECTS: Readonly<Record<CliKind, DialectDescriptor>> = {
   goose,
   cline,
   copilot,
+  pi,
+  droid,
+  vibe,
 };
 
 export function getDialect(id: CliKind): DialectDescriptor {
@@ -47,9 +53,12 @@ export {
   codex,
   copilot,
   cursor,
+  droid,
   gemini,
   goose,
   kilo,
   opencode,
+  pi,
   qwen,
+  vibe,
 };
