@@ -8,8 +8,8 @@
     "zod": "4.4.3"
   },
   "name": "agent-canonical",
-  "version": "0.2.1",
-  "description": "Canonical session/transcript schemas and per-CLI transcript-format knowledge for AI coding agents (claude-code, codex, opencode, cursor, gemini, qwen, kilo, goose, cline, copilot)",
+  "version": "0.3.0",
+  "description": "Canonical session/transcript schemas and per-CLI transcript-format knowledge for AI coding agents (claude-code, codex, opencode, cursor, gemini, qwen, kilo, goose, cline, copilot, pi, droid, vibe)",
   "keywords": [
     "coding-agent",
     "agent-sessions",
@@ -26,7 +26,10 @@
     "kilo",
     "goose",
     "cline",
-    "copilot"
+    "copilot",
+    "pi",
+    "droid",
+    "vibe"
   ],
   "license": "MIT",
   "repository": {
@@ -53,7 +56,10 @@
     "./parsers/kilo": "./src/parsers/kilo/index.ts",
     "./parsers/goose": "./src/parsers/goose/index.ts",
     "./parsers/cline": "./src/parsers/cline/index.ts",
-    "./parsers/copilot": "./src/parsers/copilot/index.ts"
+    "./parsers/copilot": "./src/parsers/copilot/index.ts",
+    "./parsers/pi": "./src/parsers/pi/index.ts",
+    "./parsers/droid": "./src/parsers/droid/index.ts",
+    "./parsers/vibe": "./src/parsers/vibe/index.ts"
   },
   "files": [
     "dist",
@@ -134,6 +140,18 @@
       "./parsers/copilot": {
         "types": "./dist/parsers/copilot/index.d.ts",
         "default": "./dist/parsers/copilot/index.js"
+      },
+      "./parsers/pi": {
+        "types": "./dist/parsers/pi/index.d.ts",
+        "default": "./dist/parsers/pi/index.js"
+      },
+      "./parsers/droid": {
+        "types": "./dist/parsers/droid/index.d.ts",
+        "default": "./dist/parsers/droid/index.js"
+      },
+      "./parsers/vibe": {
+        "types": "./dist/parsers/vibe/index.d.ts",
+        "default": "./dist/parsers/vibe/index.js"
       }
     }
   }

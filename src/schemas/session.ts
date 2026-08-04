@@ -19,6 +19,9 @@ export const CliKindSchema = z.enum([
   "goose",
   "cline",
   "copilot",
+  "pi",
+  "droid",
+  "vibe",
 ]);
 export type CliKind = z.infer<typeof CliKindSchema>;
 

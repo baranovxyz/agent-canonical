@@ -20,7 +20,8 @@ declarations, one entry per subpath export — e.g.
   (live CLI instance) wrapping `Transcript` (recorded messages / tool calls / lossless tier),
   plus `Settings` and `Artifact` stubs. No runtime dependency besides zod (peer, `^4.4.3`).
 - `agent-canonical/dialects` — pure-data descriptors, one per supported CLI (claude-code, codex,
-  opencode, cursor, gemini, qwen, kilo, goose, cline, copilot): transcript store locations, turn-end
+  opencode, cursor, gemini, qwen, kilo, goose, cline, copilot, pi, droid, vibe): transcript store
+  locations, turn-end
   signals, config paths, capability flags, and an optional `validatedAgainst` provenance record (the
   CLI version(s) and store schema version a captured session confirmed the parser against). Zero
   dependencies.
@@ -34,8 +35,8 @@ declarations, one entry per subpath export — e.g.
   missing values as zero. This version does not materialize Claude Code workflows, Cursor sessions,
   or OpenCode databases.
 - `agent-canonical/parsers/<cli>` — one entry per CLI (claude-code, codex, opencode, cursor,
-  gemini, qwen, kilo, goose, cline, copilot) turning that CLI's on-disk transcript store into a
-  canonical
+  gemini, qwen, kilo, goose, cline, copilot, pi, droid, vibe) turning that CLI's on-disk transcript
+  store into a canonical
   `Session`. Layered: a pure event decoder + a pure session reducer per dialect, with
   `parseSessionFile` (and, for the SQLite dialects, `parseSessionFromDb`/`listSessionIds` over a
   structural DB handle — no `better-sqlite3` import) as thin shells. Kilo Code is an OpenCode fork
@@ -46,22 +47,37 @@ declarations, one entry per subpath export — e.g.
   `messages-contract-v1` content across two per-session JSON files, a genuinely new file-based
   decoder. GitHub Copilot CLI writes a typed `events.jsonl` event stream per session
   (`{type, data, id, timestamp, parentId}` lines, cross-event tool correlation by `toolCallId`),
-  another genuinely new file-based decoder. Every fallible call returns
+  another genuinely new file-based decoder. Pi writes one append-only JSONL file per session under a
+  cwd-slug directory, with a `{type:"session"}` header line, `parentId`-chained entries that branch
+  in place, and per-assistant-message usage; its entry and AgentMessage unions are a third
+  genuinely new file-based decoder. Factory Droid pairs an appended `<uuid>.jsonl` with a sibling
+  `<uuid>.settings.json`: Anthropic-shaped content blocks inside Droid's own three-envelope line
+  format, with an explicit `agent_turn_outcome` per turn, a `visibility` field separating the
+  conversation from injected context and user-only notices, and token totals only at session level
+  — a fourth genuinely new file-based decoder. Mistral Vibe stores each session as a DIRECTORY of
+  `messages.jsonl` + `meta.json`, where the JSONL is raw OpenAI chat-completions messages with
+  reasoning inline on the assistant record, tool arguments as a JSON string, and no timestamp,
+  token count, or model anywhere — a fifth genuinely new file-based decoder. Every fallible call
+  returns
   `ParseResult<T>` ({success, data, issues} — never `null`, never throw-by-default). Golden tests
   use synthetic or capture-derived fixtures whose identifiers and provenance are explicit
   placeholders.
 
 Every dialect supports full-store parsing. Claude Code, Codex, OpenCode, and Cursor also export
 `snapshotCursor` / `readEventsSince` because their stores provide a reliable live event boundary.
-Gemini, Qwen, Kilo, Goose, Cline, and Copilot are full-store-only. Gemini and Qwen advertise
-`turnEnd.kind: "unavailable"`, so live consumers can select a bounded fallback instead of treating
-an intermediate record as turn-end. Kilo has an explicit on-disk turn-end signal, Goose and Cline
-a derived one, and Copilot an explicit one (`assistant.turn_end` + `session.shutdown`), but each of
-these entries exposes only the full-store parser pair.
+Gemini, Qwen, Kilo, Goose, Cline, Copilot, Pi, Droid, and Vibe are full-store-only. Gemini and Qwen
+advertise `turnEnd.kind: "unavailable"`, so live consumers can select a bounded fallback instead of
+treating an intermediate record as turn-end. Kilo has an explicit on-disk turn-end signal, Goose,
+Cline, and Vibe a derived one, Copilot an explicit one (`assistant.turn_end` + `session.shutdown`),
+Pi an explicit per-message `stopReason`, and Droid an explicit per-turn `agent_turn_outcome`, but
+each of these entries exposes only the full-store parser pair. Vibe is full-store-only for a second
+reason: its `messages.jsonl` is not strictly append-only, because a rewind or an edited tail takes a
+full-file rewrite path that can invalidate a byte-offset watermark mid-session.
 
 The opencode, kilo, and goose parsers take a structural DB handle instead of importing
 `better-sqlite3`, so no subpath resolves a native module; native deps always stay external. The
-cline and copilot parsers read plain JSON / JSONL files, so they have no native dependency either.
+cline, copilot, pi, droid, and vibe parsers read plain JSON / JSONL files, so they have no native
+dependency either.
 
 Goose's `transcriptStore.root` is the human-readable `<Goose data dir>/sessions`, not a fixed
 home-relative path. Goose 1.43's path helper resolves that data directory from XDG on current
