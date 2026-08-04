@@ -46,6 +46,22 @@ describe("dialect golden facts", () => {
     expect(DIALECTS.copilot.transcriptStore.pathPattern).toBe(
       "<sessionId>/events.jsonl",
     );
+    // Pi nests one cwd-slug directory between the root and the session file.
+    expect(DIALECTS.pi.transcriptStore.root).toBe("~/.pi/agent/sessions");
+    expect(DIALECTS.pi.transcriptStore.pathPattern).toBe(
+      "<cwd-slug>/<ISO-timestamp>_<sessionId>.jsonl",
+    );
+    // Droid slugs the session cwd into the directory name (`/` becomes `-`).
+    expect(DIALECTS.droid.transcriptStore.root).toBe("~/.factory/sessions");
+    expect(DIALECTS.droid.transcriptStore.pathPattern).toBe(
+      "<dash-slug-cwd>/<sessionId>.jsonl",
+    );
+    // Vibe's session unit is a directory holding messages.jsonl + meta.json,
+    // and only the first 8 characters of the uuid reach the directory name.
+    expect(DIALECTS.vibe.transcriptStore.root).toBe("~/.vibe/logs/session");
+    expect(DIALECTS.vibe.transcriptStore.pathPattern).toBe(
+      "<prefix>_<timestamp>_<short-sessionId>/messages.jsonl",
+    );
   });
 
   it("pins store kinds and watermark axes", () => {
@@ -63,6 +79,9 @@ describe("dialect golden facts", () => {
       "gemini",
       "qwen",
       "copilot",
+      "pi",
+      "droid",
+      "vibe",
     ] as const) {
       expect(DIALECTS[kind].transcriptStore.kind).toBe("jsonl");
       expect(DIALECTS[kind].transcriptStore.watermarkAxis).toBe("byte-offset");
@@ -84,6 +103,27 @@ describe("dialect golden facts", () => {
       "assistant.turn_end",
     );
     expect(DIALECTS.copilot.capabilities.explicitTurnEnd).toBe(true);
+    expect(DIALECTS.pi.turnEnd.kind).toBe("explicit");
+    expect(DIALECTS.pi.turnEnd.description).toContain("stopReason");
+    expect(DIALECTS.pi.capabilities.explicitTurnEnd).toBe(true);
+    // Pi's `aborted` stopReason is documented upstream but unobserved here.
+    expect(DIALECTS.pi.turnEnd.abortDescription).toBeUndefined();
+    expect(DIALECTS.pi.capabilities.abortSignalOnDisk).toBe(false);
+    expect(DIALECTS.droid.turnEnd.kind).toBe("explicit");
+    expect(DIALECTS.droid.turnEnd.description).toContain("agent_turn_outcome");
+    expect(DIALECTS.droid.capabilities.explicitTurnEnd).toBe(true);
+    // Droid records completed | error outcomes; no abort marker was observed.
+    expect(DIALECTS.droid.turnEnd.abortDescription).toBeUndefined();
+    expect(DIALECTS.droid.capabilities.abortSignalOnDisk).toBe(false);
+    expect(DIALECTS.vibe.turnEnd.kind).toBe("derived");
+    expect(DIALECTS.vibe.turnEnd.description).toContain("no tool_calls");
+    expect(DIALECTS.vibe.capabilities.explicitTurnEnd).toBe(false);
+    // Vibe's only cancellation marker is tool-scoped (a refused call), so it is
+    // described but does not make an aborted TURN detectable on disk.
+    expect(DIALECTS.vibe.turnEnd.abortDescription).toContain(
+      "user_cancellation",
+    );
+    expect(DIALECTS.vibe.capabilities.abortSignalOnDisk).toBe(false);
 
     for (const kind of CliKindSchema.options) {
       expect(DIALECTS[kind].capabilities.incrementalRead).toBe(
@@ -117,7 +157,9 @@ describe("dialect golden facts", () => {
     }
   });
 
-  it("pins per-message usage: cc, oc, gemini, qwen, kilo, goose, cline, and copilot", () => {
+  // Droid and Vibe are the counter-examples: their tokens are session-level
+  // only, in a sibling file (`<uuid>.settings.json` / `meta.json`).
+  it("pins per-message usage: cc, oc, gemini, qwen, kilo, goose, cline, copilot, and pi", () => {
     for (const kind of CliKindSchema.options) {
       expect(DIALECTS[kind].capabilities.perMessageUsage).toBe(
         kind === "claude-code" ||
@@ -127,7 +169,8 @@ describe("dialect golden facts", () => {
           kind === "kilo" ||
           kind === "goose" ||
           kind === "cline" ||
-          kind === "copilot",
+          kind === "copilot" ||
+          kind === "pi",
       );
     }
   });
@@ -140,5 +183,8 @@ describe("dialect golden facts", () => {
     expect(DIALECTS.gemini.binary).toBe("gemini");
     expect(DIALECTS.cline.binary).toBe("cline");
     expect(DIALECTS.copilot.binary).toBe("copilot");
+    expect(DIALECTS.pi.binary).toBe("pi");
+    expect(DIALECTS.droid.binary).toBe("droid");
+    expect(DIALECTS.vibe.binary).toBe("vibe");
   });
 });

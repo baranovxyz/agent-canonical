@@ -1,0 +1,734 @@
+{
+  "note": "Capture-derived Vibe 2.23.3 sessions, sanitized. Each entry materializes as <root>/<dirName>/messages.jsonl (one JSON object per `messages` element) plus <root>/<dirName>/meta.json. Placeholders: username, working directory, git commit, session uuids (the directory suffix stays the first 8 characters of the uuid, as the store derives it), message/reasoning/tool-call ids, model and provider names, provider base URLs, the metadata fingerprint, and timestamps (sequential, keeping the store's offset + microsecond format). Two size trims, not structure changes: meta.config keeps only the keys the parser consumes plus a few representative extras (the full effective config is ~35KB), and meta.system_prompt.content and meta.tools_available[].description are replaced with short placeholder lines. Line envelopes, role sequence, token numbers, tool outputs, and message text are preserved.",
+  "sessions": [
+    {
+      "dirName": "session_20260101_000000_vibefix1",
+      "meta": {
+        "session_id": "vibefix1-0545-100f-a727-000000000001",
+        "parent_session_id": null,
+        "start_time": "2026-01-01T00:00:00.000000+00:00",
+        "end_time": "2026-01-01T00:05:03.000000+00:00",
+        "git_commit": "0000000000000000000000000000000000000000",
+        "git_branch": "main",
+        "environment": {
+          "working_directory": "/home/u/project"
+        },
+        "username": "u",
+        "child_sessions": [],
+        "loops": [],
+        "title": "In one sentence, explain why append-only JSONL is …",
+        "title_source": "auto",
+        "experiments": null,
+        "stats": {
+          "steps": 10,
+          "session_prompt_tokens": 35030,
+          "session_completion_tokens": 744,
+          "session_cached_tokens": 23040,
+          "tool_calls_agreed": 2,
+          "tool_calls_rejected": 1,
+          "tool_calls_hook_denied": 0,
+          "tool_calls_failed": 0,
+          "tool_calls_succeeded": 2,
+          "context_tokens": 6570,
+          "last_turn_prompt_tokens": 6516,
+          "last_turn_completion_tokens": 54,
+          "last_turn_cached_tokens": 6400,
+          "last_turn_duration": 1.905825617024675,
+          "tokens_per_second": 28.334176809053172,
+          "input_price_per_million": 0.0,
+          "output_price_per_million": 0.0,
+          "cached_input_price_per_million": null,
+          "session_total_llm_tokens": 35774,
+          "last_turn_total_tokens": 6570,
+          "session_cost": 0.0
+        },
+        "total_messages": 13,
+        "last_message_fingerprint": "0000000000000000000000000000000000000000000000000000000000000000",
+        "tools_available": [
+          {
+            "type": "function",
+            "function": {
+              "name": "bash",
+              "description": "<tool description trimmed for fixture size>",
+              "parameters": {
+                "properties": {
+                  "command": {
+                    "description": "The shell command to execute",
+                    "type": "string"
+                  },
+                  "timeout": {
+                    "anyOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Override the default command timeout."
+                  }
+                },
+                "required": [
+                  "command"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "write_file",
+              "description": "<tool description trimmed for fixture size>",
+              "parameters": {
+                "properties": {
+                  "file_path": {
+                    "description": "The absolute path to the file to write (must be absolute, not relative)",
+                    "type": "string"
+                  },
+                  "content": {
+                    "description": "The content to write to the file",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "file_path",
+                  "content"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        ],
+        "config": {
+          "active_model": "model-alias-1",
+          "models": {
+            "model-alias-2": {
+              "name": "model-placeholder-2",
+              "provider": "provider-placeholder-1",
+              "alias": "model-alias-2",
+              "temperature": 1.0,
+              "input_price": 1.5,
+              "output_price": 7.5,
+              "cached_input_price": 0.15,
+              "thinking": "high",
+              "supports_images": true,
+              "auto_compact_threshold": 200000
+            },
+            "model-alias-3": {
+              "name": "model-placeholder-3",
+              "provider": "provider-placeholder-1",
+              "alias": "model-alias-3",
+              "temperature": 0.2,
+              "input_price": 0.1,
+              "output_price": 0.3,
+              "cached_input_price": 0.01,
+              "thinking": "off",
+              "supports_images": false,
+              "auto_compact_threshold": 200000
+            },
+            "model-alias-4": {
+              "name": "model-placeholder-4",
+              "provider": "provider-placeholder-2",
+              "alias": "model-alias-4",
+              "temperature": 0.2,
+              "input_price": 0.0,
+              "output_price": 0.0,
+              "cached_input_price": null,
+              "thinking": "off",
+              "supports_images": false,
+              "auto_compact_threshold": 200000
+            },
+            "model-alias-5": {
+              "name": "model-placeholder-5",
+              "provider": "provider-placeholder-3",
+              "alias": "model-alias-5",
+              "temperature": 0.2,
+              "input_price": 0.0,
+              "output_price": 0.0,
+              "cached_input_price": null,
+              "thinking": "off",
+              "supports_images": false,
+              "auto_compact_threshold": 200000
+            },
+            "model-alias-1": {
+              "name": "model-placeholder-1",
+              "provider": "provider-placeholder-3",
+              "alias": "model-alias-1",
+              "temperature": 0.2,
+              "input_price": 0.0,
+              "output_price": 0.0,
+              "cached_input_price": null,
+              "thinking": "high",
+              "supports_images": false,
+              "auto_compact_threshold": 200000
+            },
+            "model-alias-6": {
+              "name": "model-placeholder-6",
+              "provider": "provider-placeholder-4",
+              "alias": "model-alias-6",
+              "temperature": 0.2,
+              "input_price": 0.0,
+              "output_price": 0.0,
+              "cached_input_price": null,
+              "thinking": "high",
+              "supports_images": false,
+              "auto_compact_threshold": 200000
+            }
+          },
+          "providers": [
+            {
+              "name": "provider-placeholder-1",
+              "api_base": "https://provider-placeholder.example/v1",
+              "api_key_env_var": "PROVIDER_PLACEHOLDER_API_KEY",
+              "browser_auth_base_url": "https://provider-placeholder.example",
+              "browser_auth_api_base_url": "https://provider-placeholder.example/api",
+              "api_style": "openai",
+              "backend": "mistral",
+              "reasoning_field_name": "reasoning_content",
+              "project_id": "",
+              "region": "",
+              "extra_headers": {}
+            },
+            {
+              "name": "provider-placeholder-2",
+              "api_base": "https://provider-placeholder.example/v1",
+              "api_key_env_var": "",
+              "browser_auth_base_url": null,
+              "browser_auth_api_base_url": null,
+              "api_style": "openai",
+              "backend": "generic",
+              "reasoning_field_name": "reasoning_content",
+              "project_id": "",
+              "region": "",
+              "extra_headers": {}
+            },
+            {
+              "name": "provider-placeholder-3",
+              "api_base": "https://provider-placeholder.example/v1",
+              "api_key_env_var": "PROVIDER_PLACEHOLDER_API_KEY",
+              "browser_auth_base_url": null,
+              "browser_auth_api_base_url": null,
+              "api_style": "openai",
+              "backend": "generic",
+              "reasoning_field_name": "reasoning_content",
+              "project_id": "",
+              "region": "",
+              "extra_headers": {}
+            },
+            {
+              "name": "provider-placeholder-4",
+              "api_base": "https://provider-placeholder.example/v1",
+              "api_key_env_var": "PROVIDER_PLACEHOLDER_API_KEY",
+              "browser_auth_base_url": null,
+              "browser_auth_api_base_url": null,
+              "api_style": "openai",
+              "backend": "generic",
+              "reasoning_field_name": "reasoning",
+              "project_id": "",
+              "region": "",
+              "extra_headers": {}
+            }
+          ],
+          "default_agent": "default",
+          "system_prompt_id": "cli",
+          "auto_compact_threshold": 200000,
+          "bypass_tool_permissions": false,
+          "disabled_tools": [],
+          "enable_telemetry": false,
+          "session_logging": {
+            "save_dir": "/home/u/.vibe/logs/session",
+            "session_prefix": "session",
+            "enabled": true
+          }
+        },
+        "agent_profile": {
+          "name": "default",
+          "overrides": {
+            "disabled_tools": [
+              "exit_plan_mode"
+            ]
+          }
+        },
+        "system_prompt": {
+          "role": "system",
+          "content": "<system prompt trimmed for fixture size>",
+          "images": null,
+          "injected": false,
+          "reasoning_content": null,
+          "reasoning_state": null,
+          "reasoning_signature": null,
+          "reasoning_message_id": null,
+          "tool_calls": null,
+          "name": null,
+          "tool_call_id": null,
+          "tool_result": null,
+          "message_id": "msg_fixture_system",
+          "user_display_content": null,
+          "input_text": null,
+          "resources": null,
+          "manual_shell": null
+        }
+      },
+      "messages": [
+        {
+          "role": "user",
+          "content": "In one sentence, explain why append-only JSONL is safer than rewriting a whole transcript file on every turn.",
+          "injected": false,
+          "message_id": "msg_fixture_1"
+        },
+        {
+          "role": "assistant",
+          "content": "Append-only JSONL is safer because each turn writes a single new line to the end of the file, so a crash or interruption mid-write only risks losing that one line rather than corrupting or truncating the entire transcript, and the file stays valid even if the process dies between turns.",
+          "injected": false,
+          "message_id": "msg_fixture_2"
+        },
+        {
+          "role": "user",
+          "content": "Run the shell command ls -la in this directory, then create a file hello.txt containing exactly: hi",
+          "injected": false,
+          "message_id": "msg_fixture_3"
+        },
+        {
+          "role": "assistant",
+          "injected": false,
+          "tool_calls": [
+            {
+              "id": "call_fixture_1",
+              "index": 0,
+              "function": {
+                "name": "bash",
+                "arguments": "{\"command\": \"ls -la /home/u/project\"}"
+              },
+              "type": "function",
+              "presentation": {
+                "kind": "shell",
+                "display": {
+                  "summary": "bash: ls -la /home/u/project",
+                  "suffix": "",
+                  "verb": "Running",
+                  "message": "ls -la /home/u/project",
+                  "settledVerb": "Ran",
+                  "settledMessage": "ls -la /home/u/project",
+                  "statusText": "Running command"
+                }
+              }
+            }
+          ],
+          "message_id": "msg_fixture_4"
+        },
+        {
+          "role": "tool",
+          "content": "command: ls -la /home/u/project\nstdout: total 28\ndrwxrwxr-x  3 u         u         4096 Jan  1 00:00 .\ndrwxr-x--- 32 u         u         4096 Jan  1 00:00 ..\ndrwxrwxr-x  8 u         u         4096 Jan  1 00:00 .git\n-rw-rw-r--  1 u         u           19 Jan  1 00:00 notes.txt\n-rwxr-xr-x  1 u         u          129 Jan  1 00:00 build.sh\n-rwxr-xr-x  1 u         u          569 Jan  1 00:00 start.sh\n-rwxr-xr-x  1 u         u          342 Jan  1 00:00 check.sh\n\nstderr: \nreturncode: 0",
+          "injected": false,
+          "name": "bash",
+          "tool_call_id": "call_fixture_1",
+          "tool_result": {
+            "output": {
+              "command": "ls -la /home/u/project",
+              "stdout": "total 28\ndrwxrwxr-x  3 u         u         4096 Jan  1 00:00 .\ndrwxr-x--- 32 u         u         4096 Jan  1 00:00 ..\ndrwxrwxr-x  8 u         u         4096 Jan  1 00:00 .git\n-rw-rw-r--  1 u         u           19 Jan  1 00:00 notes.txt\n-rwxr-xr-x  1 u         u          129 Jan  1 00:00 build.sh\n-rwxr-xr-x  1 u         u          569 Jan  1 00:00 start.sh\n-rwxr-xr-x  1 u         u          342 Jan  1 00:00 check.sh\n",
+              "stderr": "",
+              "returncode": 0
+            },
+            "duration": 0.018541014986112714,
+            "cancelled": false,
+            "presentation": {
+              "kind": "shell",
+              "display": {
+                "success": true,
+                "verb": "Ran",
+                "message": "ls -la /home/u/project",
+                "warnings": [],
+                "suffix": ""
+              }
+            }
+          }
+        },
+        {
+          "role": "assistant",
+          "injected": false,
+          "tool_calls": [
+            {
+              "id": "call_fixture_2",
+              "index": 0,
+              "function": {
+                "name": "write_file",
+                "arguments": "{\"file_path\": \"/home/u/project/hello.txt\", \"content\": \"hi\"}"
+              },
+              "type": "function",
+              "presentation": {
+                "kind": "file_write",
+                "display": {
+                  "summary": "Writing /home/u/project/hello.txt",
+                  "content": "hi",
+                  "suffix": "",
+                  "verb": "Creating",
+                  "message": "/home/u/project/hello.txt",
+                  "settledVerb": "Created",
+                  "settledMessage": "/home/u/project/hello.txt",
+                  "statusText": "Writing file"
+                }
+              }
+            }
+          ],
+          "message_id": "msg_fixture_5"
+        },
+        {
+          "role": "tool",
+          "content": "file_path: /home/u/project/hello.txt\nbytes_written: 2\ncontent: hi",
+          "injected": false,
+          "name": "write_file",
+          "tool_call_id": "call_fixture_2",
+          "tool_result": {
+            "output": {
+              "file_path": "/home/u/project/hello.txt",
+              "bytes_written": 2,
+              "content": "hi"
+            },
+            "duration": 0.019116812851279974,
+            "cancelled": false,
+            "presentation": {
+              "kind": "file_write",
+              "display": {
+                "success": true,
+                "verb": "Created",
+                "message": "hello.txt",
+                "warnings": [],
+                "suffix": ""
+              }
+            }
+          }
+        },
+        {
+          "role": "assistant",
+          "content": "Done. Created `hello.txt` containing exactly `hi` (2 bytes, no trailing newline).",
+          "injected": false,
+          "message_id": "msg_fixture_6"
+        },
+        {
+          "role": "user",
+          "content": "Think step by step: a session store writes one JSON line per message and rewrites a metadata file after each turn. If the process is killed between the two writes, what exactly becomes inconsistent, and what single field would let a reader detect it?",
+          "injected": false,
+          "message_id": "msg_fixture_7"
+        },
+        {
+          "role": "assistant",
+          "content": "The metadata file becomes stale relative to the append-only log: the new message line was durably appended, but the metadata rewrite never happened, so metadata still claims the state from *before* this turn while the log physically contains the new message. A reader that trusts the metadata will silently miss the latest message (or, if it uses metadata to bound replay, may even misread which lines are \"committed\" — ambiguity is the real problem: you can't tell whether the trailing line is a legitimate uncommitted message or corruption).\n\nThe single field that resolves it is a **monotonic sequence number** (message count / last-seq) stored in both places: metadata records `last_seq` at the time of its rewrite, and each log line carries its own `seq`. On read, compare the last line's `seq` against metadata's `last_seq` — if the line's is greater, the metadata is stale and the reader knows to treat that line as uncommitted (or to force a metadata refresh) instead of guessing.",
+          "injected": false,
+          "reasoning_content": "The user asks a conceptual question. Let me think step by step.\n\nSetup: a session store writes one JSON line per message (append-only log) and rewrites a metadata file after each turn. Process killed between the two writes.\n\nWhat becomes inconsistent: The message log has the new line appended (message recorded), but the metadata file wasn't updated. So the metadata is stale relative to the log — e.g., message count, last message ID, sequence number, cursor, checksum.\n\nThe inconsistent state: metadata says N messages / last message X, but log actually contains N+1 messages / last message Y. A reader trusting metadata would miss the latest message; a reader using metadata to resume/replay would not include the newest message, or if it uses metadata checksum/truncation, it may treat the log as longer than metadata expects.\n\nSingle field that lets a reader detect it: a monotonically increasing sequence/version/counter in both the metadata and the last line (or each line). Reader compares metadata's stored counter against the last log line's counter. If mismatch, detect that metadata is stale (or log has uncommitted trailing writes). So the field is something like `last_seq` / `version` / `message_count`.\n\nI should answer concisely with the reasoning. One or two paragraphs. No tools needed.",
+          "reasoning_message_id": "reason_fixture_1",
+          "message_id": "msg_fixture_8"
+        },
+        {
+          "role": "user",
+          "content": "Now delete hello.txt using a shell command.",
+          "injected": false,
+          "message_id": "msg_fixture_9"
+        },
+        {
+          "role": "assistant",
+          "injected": false,
+          "tool_calls": [
+            {
+              "id": "call_fixture_3",
+              "index": 0,
+              "function": {
+                "name": "bash",
+                "arguments": "{\"command\": \"rm /home/u/project/hello.txt\"}"
+              },
+              "type": "function",
+              "presentation": {
+                "kind": "shell",
+                "display": {
+                  "summary": "bash: rm /home/u/project/hello.txt",
+                  "suffix": "",
+                  "verb": "Running",
+                  "message": "rm /home/u/project/hello.txt",
+                  "settledVerb": "Ran",
+                  "settledMessage": "rm /home/u/project/hello.txt",
+                  "statusText": "Running command"
+                }
+              }
+            }
+          ],
+          "message_id": "msg_fixture_10"
+        },
+        {
+          "role": "tool",
+          "content": "<user_cancellation>User cancelled the operation.</user_cancellation>",
+          "injected": false,
+          "name": "bash",
+          "tool_call_id": "call_fixture_3"
+        }
+      ]
+    },
+    {
+      "dirName": "session_20260101_001000_vibefix2",
+      "meta": {
+        "session_id": "vibefix2-3863-0806-d099-000000000002",
+        "parent_session_id": null,
+        "start_time": "2026-01-01T00:10:00.000000+00:00",
+        "end_time": "2026-01-01T00:10:16.000000+00:00",
+        "git_commit": "0000000000000000000000000000000000000000",
+        "git_branch": "main",
+        "environment": {
+          "working_directory": "/home/u/project"
+        },
+        "username": "u",
+        "child_sessions": [],
+        "loops": [],
+        "title": "In one sentence, explain what a JSONL transcript f…",
+        "title_source": "auto",
+        "experiments": null,
+        "stats": {
+          "steps": 1,
+          "session_prompt_tokens": 0,
+          "session_completion_tokens": 0,
+          "session_cached_tokens": 0,
+          "tool_calls_agreed": 0,
+          "tool_calls_rejected": 0,
+          "tool_calls_hook_denied": 0,
+          "tool_calls_failed": 0,
+          "tool_calls_succeeded": 0,
+          "context_tokens": 0,
+          "last_turn_prompt_tokens": 0,
+          "last_turn_completion_tokens": 0,
+          "last_turn_cached_tokens": 0,
+          "last_turn_duration": 0.0,
+          "tokens_per_second": 0.0,
+          "input_price_per_million": 0.0,
+          "output_price_per_million": 0.0,
+          "cached_input_price_per_million": null,
+          "session_total_llm_tokens": 0,
+          "last_turn_total_tokens": 0,
+          "session_cost": 0.0
+        },
+        "total_messages": 1,
+        "last_message_fingerprint": "0000000000000000000000000000000000000000000000000000000000000000",
+        "tools_available": [
+          {
+            "type": "function",
+            "function": {
+              "name": "bash",
+              "description": "<tool description trimmed for fixture size>",
+              "parameters": {
+                "properties": {
+                  "command": {
+                    "description": "The shell command to execute",
+                    "type": "string"
+                  },
+                  "timeout": {
+                    "anyOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Override the default command timeout."
+                  }
+                },
+                "required": [
+                  "command"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "write_file",
+              "description": "<tool description trimmed for fixture size>",
+              "parameters": {
+                "properties": {
+                  "file_path": {
+                    "description": "The absolute path to the file to write (must be absolute, not relative)",
+                    "type": "string"
+                  },
+                  "content": {
+                    "description": "The content to write to the file",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "file_path",
+                  "content"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        ],
+        "config": {
+          "active_model": "model-alias-7",
+          "models": {
+            "model-alias-2": {
+              "name": "model-placeholder-2",
+              "provider": "provider-placeholder-1",
+              "alias": "model-alias-2",
+              "temperature": 1.0,
+              "input_price": 1.5,
+              "output_price": 7.5,
+              "cached_input_price": 0.15,
+              "thinking": "high",
+              "supports_images": true,
+              "auto_compact_threshold": 200000
+            },
+            "model-alias-3": {
+              "name": "model-placeholder-3",
+              "provider": "provider-placeholder-1",
+              "alias": "model-alias-3",
+              "temperature": 0.2,
+              "input_price": 0.1,
+              "output_price": 0.3,
+              "cached_input_price": 0.01,
+              "thinking": "off",
+              "supports_images": false,
+              "auto_compact_threshold": 200000
+            },
+            "model-alias-4": {
+              "name": "model-placeholder-4",
+              "provider": "provider-placeholder-2",
+              "alias": "model-alias-4",
+              "temperature": 0.2,
+              "input_price": 0.0,
+              "output_price": 0.0,
+              "cached_input_price": null,
+              "thinking": "off",
+              "supports_images": false,
+              "auto_compact_threshold": 200000
+            },
+            "model-alias-7": {
+              "name": "model-placeholder-7",
+              "provider": "provider-placeholder-4",
+              "alias": "model-alias-7",
+              "temperature": 0.2,
+              "input_price": 0.0,
+              "output_price": 0.0,
+              "cached_input_price": null,
+              "thinking": "off",
+              "supports_images": true,
+              "auto_compact_threshold": 200000
+            },
+            "model-alias-8": {
+              "name": "model-placeholder-8",
+              "provider": "provider-placeholder-5",
+              "alias": "model-alias-8",
+              "temperature": 0.2,
+              "input_price": 0.0,
+              "output_price": 0.0,
+              "cached_input_price": null,
+              "thinking": "high",
+              "supports_images": false,
+              "auto_compact_threshold": 200000
+            }
+          },
+          "providers": [
+            {
+              "name": "provider-placeholder-1",
+              "api_base": "https://provider-placeholder.example/v1",
+              "api_key_env_var": "PROVIDER_PLACEHOLDER_API_KEY",
+              "browser_auth_base_url": "https://provider-placeholder.example",
+              "browser_auth_api_base_url": "https://provider-placeholder.example/api",
+              "api_style": "openai",
+              "backend": "mistral",
+              "reasoning_field_name": "reasoning_content",
+              "project_id": "",
+              "region": "",
+              "extra_headers": {}
+            },
+            {
+              "name": "provider-placeholder-2",
+              "api_base": "https://provider-placeholder.example/v1",
+              "api_key_env_var": "",
+              "browser_auth_base_url": null,
+              "browser_auth_api_base_url": null,
+              "api_style": "openai",
+              "backend": "generic",
+              "reasoning_field_name": "reasoning_content",
+              "project_id": "",
+              "region": "",
+              "extra_headers": {}
+            },
+            {
+              "name": "provider-placeholder-4",
+              "api_base": "https://provider-placeholder.example/v1",
+              "api_key_env_var": "PROVIDER_PLACEHOLDER_API_KEY",
+              "browser_auth_base_url": null,
+              "browser_auth_api_base_url": null,
+              "api_style": "openai",
+              "backend": "generic",
+              "reasoning_field_name": "reasoning_content",
+              "project_id": "",
+              "region": "",
+              "extra_headers": {}
+            },
+            {
+              "name": "provider-placeholder-5",
+              "api_base": "https://provider-placeholder.example/v1",
+              "api_key_env_var": "PROVIDER_PLACEHOLDER_API_KEY",
+              "browser_auth_base_url": null,
+              "browser_auth_api_base_url": null,
+              "api_style": "openai",
+              "backend": "generic",
+              "reasoning_field_name": "reasoning",
+              "project_id": "",
+              "region": "",
+              "extra_headers": {}
+            }
+          ],
+          "default_agent": "default",
+          "system_prompt_id": "cli",
+          "auto_compact_threshold": 200000,
+          "bypass_tool_permissions": false,
+          "disabled_tools": [],
+          "enable_telemetry": false,
+          "session_logging": {
+            "save_dir": "/home/u/.vibe/logs/session",
+            "session_prefix": "session",
+            "enabled": true
+          }
+        },
+        "agent_profile": {
+          "name": "default",
+          "overrides": {
+            "disabled_tools": [
+              "exit_plan_mode"
+            ]
+          }
+        },
+        "system_prompt": {
+          "role": "system",
+          "content": "<system prompt trimmed for fixture size>",
+          "images": null,
+          "injected": false,
+          "reasoning_content": null,
+          "reasoning_state": null,
+          "reasoning_signature": null,
+          "reasoning_message_id": null,
+          "tool_calls": null,
+          "name": null,
+          "tool_call_id": null,
+          "tool_result": null,
+          "message_id": "msg_fixture_system",
+          "user_display_content": null,
+          "input_text": null,
+          "resources": null,
+          "manual_shell": null
+        }
+      },
+      "messages": [
+        {
+          "role": "user",
+          "content": "In one sentence, explain what a JSONL transcript file is and why append-only helps crash safety.",
+          "injected": false,
+          "message_id": "msg_fixture_11"
+        }
+      ]
+    }
+  ]
+}

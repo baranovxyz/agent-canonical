@@ -1,0 +1,483 @@
+{
+  "sessions": [
+    {
+      "sessionId": "droid_fixture_1",
+      "cwdSlug": "-home-u-project",
+      "fileName": "droid_fixture_1.jsonl",
+      "settings": {
+        "assistantActiveTimeMs": 58298,
+        "model": "custom:model-placeholder-0",
+        "reasoningEffort": "max",
+        "interactionMode": "auto",
+        "autonomyLevel": "off",
+        "autonomyMode": "normal",
+        "compactionThresholdCheckEnabled": true,
+        "tokenUsage": {
+          "inputTokens": 13653,
+          "outputTokens": 591,
+          "cacheCreationTokens": 0,
+          "cacheReadTokens": 66560,
+          "thinkingTokens": 0,
+          "factoryCredits": 0
+        },
+        "childInclusiveTokenUsageBySessionId": {},
+        "inclusiveTokenUsage": {
+          "inputTokens": 13653,
+          "outputTokens": 591,
+          "cacheCreationTokens": 0,
+          "cacheReadTokens": 66560,
+          "thinkingTokens": 0,
+          "factoryCredits": 0
+        },
+        "providerLock": "generic-chat-completion-api",
+        "providerLockTimestamp": "2026-01-01T00:00:00.000Z",
+        "lastCallTokenUsage": {
+          "inputTokens": 98,
+          "outputTokens": 226,
+          "cacheReadTokens": 13568
+        }
+      },
+      "entries": [
+        {
+          "type": "session_start",
+          "id": "droid_fixture_1",
+          "title": "In one short sentence, what is a JSONL file?",
+          "owner": "u",
+          "version": 2,
+          "cwd": "/home/u/project",
+          "hostId": "host-fixture-1",
+          "isSessionTitleManuallySet": false
+        },
+        {
+          "type": "message",
+          "id": "context-msg_fixture_1",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "message": {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "<system-reminder>Current date: <date>. Use it for time-sensitive web searches.</system-reminder>"
+              },
+              {
+                "type": "text",
+                "text": "<system-reminder>\nAvailable skills (invoke by exact name when its description matches the request):\nskill-placeholder-one: Description placeholder for the first bundled skill.\nskill-placeholder-two: Description placeholder for the second bundled skill.\n</system-reminder>"
+              },
+              {
+                "type": "text",
+                "text": "<system-reminder>\nAvailable subagents for the Task tool are listed below. The Task tool relies on this system reminder for valid subagent_type names.\n\nWhen a user task matches an available subagent, prefer delegating to it.\n\nsubagent-placeholder: Description placeholder for the bundled subagent.\n</system-reminder>"
+              },
+              {
+                "type": "text",
+                "text": "<system-reminder>\n\nUser system info (linux 0.0.0-generic)\n\nModel: model-placeholder\nUser language: en\n\n# The commands below ran once at session start to gather environment context. Don't repeat them unless you think the environment has changed.\n\n% pwd\n/home/u/project\n\n% ls\n\n\n% git status --short --branch\n## main\n\n% git log --oneline -5\n0000000 init\n\n% git show-ref --verify --quiet refs/heads/main && echo \"Default branch is main\"\nDefault branch is main\n\n\n\n\nNotes:\n- To enter a mission, the user needs to run the `/missions` slash command.\n\n</system-reminder>"
+              }
+            ],
+            "visibility": "llm_only"
+          }
+        },
+        {
+          "type": "message",
+          "id": "msg_fixture_1",
+          "timestamp": "2026-01-01T00:00:17.000Z",
+          "message": {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "In one short sentence, what is a JSONL file?"
+              }
+            ],
+            "interactionMode": "auto"
+          },
+          "parentId": "context-msg_fixture_1"
+        },
+        {
+          "type": "message",
+          "id": "msg_fixture_2",
+          "timestamp": "2026-01-01T00:00:34.000Z",
+          "message": {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "thinking",
+                "signature": "reasoning_content",
+                "signatureProvider": "generic-chat-completion-api",
+                "thinking": "The user asks a simple informational question: \"In one short sentence, what is a JSONL file?\" This is informational, no tools needed."
+              },
+              {
+                "type": "text",
+                "text": "A JSONL (JSON Lines) file is a text file where each line is a single, self-contained JSON object, making it easy to process records one at a time."
+              }
+            ],
+            "openaiMessageId": "resp_fixture_1",
+            "chatCompletionReasoningField": "reasoning_content",
+            "chatCompletionReasoningContent": "The user asks a simple informational question: \"In one short sentence, what is a JSONL file?\" This is informational, no tools needed.",
+            "modelId": "custom:model-placeholder-0",
+            "reasoningEffort": "high"
+          },
+          "parentId": "msg_fixture_1"
+        },
+        {
+          "type": "agent_turn_outcome",
+          "turnId": "msg_fixture_1",
+          "reason": "completed",
+          "resultKind": "text"
+        },
+        {
+          "type": "message",
+          "id": "msg_fixture_3",
+          "timestamp": "2026-01-01T00:00:51.000Z",
+          "message": {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "Create a file hello.txt containing exactly: hi"
+              }
+            ],
+            "interactionMode": "auto"
+          },
+          "parentId": "msg_fixture_2"
+        },
+        {
+          "type": "message",
+          "id": "msg_fixture_4",
+          "timestamp": "2026-01-01T00:01:08.000Z",
+          "message": {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "thinking",
+                "signature": "reasoning_content",
+                "signatureProvider": "generic-chat-completion-api",
+                "durationMs": 1249,
+                "thinking": "Simple task: create a file hello.txt containing exactly \"hi\". One trivial step. I can use Create tool or shell. The Create tool writes files. Let me use Create with content \"hi\" (no trailing newline? The Create tool writes content; \"exactly: hi\" - I'll write \"hi\" without a newline to be exact)."
+              },
+              {
+                "type": "tool_use",
+                "id": "call_fixture_1",
+                "name": "Create",
+                "input": {
+                  "file_path": "/home/u/project/hello.txt",
+                  "content": "hi"
+                }
+              }
+            ],
+            "openaiMessageId": "resp_fixture_2",
+            "chatCompletionReasoningField": "reasoning_content",
+            "chatCompletionReasoningContent": "Simple task: create a file hello.txt containing exactly \"hi\". One trivial step. I can use Create tool or shell. The Create tool writes files. Let me use Create with content \"hi\" (no trailing newline? The Create tool writes content; \"exactly: hi\" - I'll write \"hi\" without a newline to be exact).",
+            "modelId": "custom:model-placeholder-0",
+            "reasoningEffort": "high"
+          },
+          "parentId": "msg_fixture_3"
+        },
+        {
+          "type": "message",
+          "id": "msg_fixture_5",
+          "timestamp": "2026-01-01T00:01:25.000Z",
+          "message": {
+            "role": "user",
+            "content": [
+              {
+                "type": "tool_result",
+                "tool_use_id": "call_fixture_1",
+                "is_error": false,
+                "content": "{\"success\":true,\"file_path\":\"/home/u/project/hello.txt\"}"
+              }
+            ]
+          },
+          "parentId": "msg_fixture_4"
+        },
+        {
+          "type": "message",
+          "id": "msg_fixture_6",
+          "timestamp": "2026-01-01T00:01:42.000Z",
+          "message": {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "Created hello.txt containing exactly \"hi\"."
+              }
+            ],
+            "openaiMessageId": "resp_fixture_3",
+            "modelId": "custom:model-placeholder-0",
+            "reasoningEffort": "high"
+          },
+          "parentId": "msg_fixture_5"
+        },
+        {
+          "type": "agent_turn_outcome",
+          "turnId": "msg_fixture_3",
+          "reason": "completed",
+          "resultKind": "text"
+        },
+        {
+          "type": "message",
+          "id": "msg_fixture_7",
+          "timestamp": "2026-01-01T00:01:59.000Z",
+          "message": {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "Run the shell command: ls -la"
+              }
+            ],
+            "interactionMode": "auto"
+          },
+          "parentId": "msg_fixture_6"
+        },
+        {
+          "type": "message",
+          "id": "msg_fixture_8",
+          "timestamp": "2026-01-01T00:02:16.000Z",
+          "message": {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "thinking",
+                "signature": "reasoning_content",
+                "signatureProvider": "generic-chat-completion-api",
+                "durationMs": 876,
+                "thinking": "Simple read-only command. Run it."
+              },
+              {
+                "type": "tool_use",
+                "id": "call_fixture_2",
+                "name": "Execute",
+                "input": {
+                  "command": "ls -la",
+                  "summary": "List all files in current directory",
+                  "riskLevel": "low",
+                  "riskLevelReason": "This ls command only reads the directory listing without modifying any files."
+                }
+              }
+            ],
+            "openaiMessageId": "resp_fixture_4",
+            "chatCompletionReasoningField": "reasoning_content",
+            "chatCompletionReasoningContent": "Simple read-only command. Run it.",
+            "modelId": "custom:model-placeholder-0",
+            "reasoningEffort": "high"
+          },
+          "parentId": "msg_fixture_7"
+        },
+        {
+          "type": "message",
+          "id": "msg_fixture_9",
+          "timestamp": "2026-01-01T00:02:33.000Z",
+          "message": {
+            "role": "user",
+            "content": [
+              {
+                "type": "tool_result",
+                "tool_use_id": "call_fixture_2",
+                "is_error": false,
+                "content": "total 16\ndrwxrwxr-x  3 u u 4096 Jan  1 00:00 .\ndrwxr-x--- 32 u u 4096 Jan  1 00:00 ..\ndrwxrwxr-x  8 u u 4096 Jan  1 00:00 .git\n-rw-------  1 u u    3 Jan  1 00:00 hello.txt\n\n\n[Process exited with code 0]"
+              }
+            ]
+          },
+          "parentId": "msg_fixture_8"
+        },
+        {
+          "type": "message",
+          "id": "msg_fixture_10",
+          "timestamp": "2026-01-01T00:02:50.000Z",
+          "message": {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "The directory contains only the .git folder and hello.txt (3 bytes, as expected for \"hi\" without a trailing newline)."
+              }
+            ],
+            "openaiMessageId": "resp_fixture_5",
+            "modelId": "custom:model-placeholder-0",
+            "reasoningEffort": "high"
+          },
+          "parentId": "msg_fixture_9"
+        },
+        {
+          "type": "agent_turn_outcome",
+          "turnId": "msg_fixture_7",
+          "reason": "completed",
+          "resultKind": "text"
+        },
+        {
+          "type": "message",
+          "id": "msg_fixture_11",
+          "timestamp": "2026-01-01T00:03:07.000Z",
+          "message": {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "Puzzle: a bat and a ball cost 1.10 total. The bat costs 1.00 more than the ball. How much is the ball? Reason it out step by step."
+              }
+            ],
+            "interactionMode": "auto"
+          },
+          "parentId": "msg_fixture_10"
+        },
+        {
+          "type": "message",
+          "id": "msg_fixture_12",
+          "timestamp": "2026-01-01T00:03:24.000Z",
+          "message": {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "thinking",
+                "signature": "reasoning_content",
+                "signatureProvider": "generic-chat-completion-api",
+                "thinking": "This is the classic bat and ball puzzle. The answer is 5 cents (0.05). Let me reason it out.\n\nLet b = ball cost, bat = b + 1.00. Total: b + (b + 1.00) = 1.10. So 2b = 0.10, b = 0.05. The bat costs 1.05. This is a conversational/informational answer, no tools needed."
+              },
+              {
+                "type": "text",
+                "text": "Let b be the price of the ball. The bat costs 1.00 more than the ball, so it's b + 1.00. Together they total 1.10:\n\n- b + (b + 1.00) = 1.10\n- 2b + 1.00 = 1.10\n- 2b = 0.10\n- b = 0.05\n\nThe ball costs 5 cents, and the bat costs 1.05. The trap is answering 10 cents, which would make the bat only 0.90 more than the ball."
+              }
+            ],
+            "openaiMessageId": "resp_fixture_6",
+            "chatCompletionReasoningField": "reasoning_content",
+            "chatCompletionReasoningContent": "This is the classic bat and ball puzzle. The answer is 5 cents (0.05). Let me reason it out.\n\nLet b = ball cost, bat = b + 1.00. Total: b + (b + 1.00) = 1.10. So 2b = 0.10, b = 0.05. The bat costs 1.05. This is a conversational/informational answer, no tools needed.",
+            "modelId": "custom:model-placeholder-0",
+            "reasoningEffort": "max"
+          },
+          "parentId": "msg_fixture_11"
+        },
+        {
+          "type": "agent_turn_outcome",
+          "turnId": "msg_fixture_11",
+          "reason": "completed",
+          "resultKind": "text"
+        }
+      ]
+    },
+    {
+      "sessionId": "droid_fixture_2",
+      "cwdSlug": "-home-u-project",
+      "fileName": "droid_fixture_2.jsonl",
+      "settings": {
+        "assistantActiveTimeMs": 1060,
+        "model": "custom:model-placeholder-1",
+        "reasoningEffort": "high",
+        "interactionMode": "auto",
+        "autonomyLevel": "off",
+        "autonomyMode": "normal",
+        "compactionThresholdCheckEnabled": true,
+        "tokenUsage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "cacheCreationTokens": 0,
+          "cacheReadTokens": 0,
+          "thinkingTokens": 0,
+          "factoryCredits": 0
+        },
+        "childInclusiveTokenUsageBySessionId": {},
+        "inclusiveTokenUsage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "cacheCreationTokens": 0,
+          "cacheReadTokens": 0,
+          "thinkingTokens": 0,
+          "factoryCredits": 0
+        },
+        "providerLock": "generic-chat-completion-api",
+        "providerLockTimestamp": "2026-01-01T00:00:00.000Z"
+      },
+      "entries": [
+        {
+          "type": "session_start",
+          "id": "droid_fixture_2",
+          "title": "In one short sentence, what is a JSONL file?",
+          "owner": "u",
+          "version": 2,
+          "cwd": "/home/u/project",
+          "hostId": "host-fixture-1",
+          "isSessionTitleManuallySet": false
+        },
+        {
+          "type": "message",
+          "id": "msg_fixture_20",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "message": {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "Error: Your custom model \"vendor/model-placeholder\" appears to be a Claude/Anthropic model, but is configured with provider \"generic-chat-completion-api\". For Claude models (Haiku, Sonnet, Opus), use \"provider\": \"anthropic\". See the BYOK documentation for details."
+              }
+            ],
+            "visibility": "both"
+          }
+        },
+        {
+          "type": "message",
+          "id": "context-msg_fixture_21",
+          "timestamp": "2026-01-01T00:00:17.000Z",
+          "message": {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "<system-reminder>Current date: <date>. Use it for time-sensitive web searches.</system-reminder>"
+              },
+              {
+                "type": "text",
+                "text": "<system-reminder>\nAvailable skills (invoke by exact name when its description matches the request):\nskill-placeholder-one: Description placeholder for the first bundled skill.\nskill-placeholder-two: Description placeholder for the second bundled skill.\n</system-reminder>"
+              },
+              {
+                "type": "text",
+                "text": "<system-reminder>\nAvailable subagents for the Task tool are listed below. The Task tool relies on this system reminder for valid subagent_type names.\n\nWhen a user task matches an available subagent, prefer delegating to it.\n\nsubagent-placeholder: Description placeholder for the bundled subagent.\n</system-reminder>"
+              },
+              {
+                "type": "text",
+                "text": "<system-reminder>\n\nUser system info (linux 0.0.0-generic)\n\nModel: model-placeholder\nUser language: en\n\n# The commands below ran once at session start to gather environment context. Don't repeat them unless you think the environment has changed.\n\n% pwd\n/home/u/project\n\n% ls\n\n\n% git status --short --branch\n## main\n\n% git log --oneline -5\n0000000 init\n\n% git show-ref --verify --quiet refs/heads/main && echo \"Default branch is main\"\nDefault branch is main\n\n\n\n\nNotes:\n- To enter a mission, the user needs to run the `/missions` slash command.\n\n</system-reminder>"
+              }
+            ],
+            "visibility": "llm_only"
+          },
+          "parentId": "msg_fixture_20"
+        },
+        {
+          "type": "message",
+          "id": "msg_fixture_21",
+          "timestamp": "2026-01-01T00:00:34.000Z",
+          "message": {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "In one short sentence, what is a JSONL file?"
+              }
+            ],
+            "interactionMode": "auto"
+          },
+          "parentId": "context-msg_fixture_21"
+        },
+        {
+          "type": "message",
+          "id": "msg_fixture_22",
+          "timestamp": "2026-01-01T00:00:51.000Z",
+          "message": {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "BYOK Error: 402 Insufficient credits. Add more from your model provider's billing page.\n\nUpstream error: Insufficient credits.\n\n Please check your billing status with your BYOK model provider."
+              }
+            ],
+            "visibility": "user_only"
+          },
+          "parentId": "msg_fixture_21"
+        },
+        {
+          "type": "agent_turn_outcome",
+          "turnId": "msg_fixture_21",
+          "reason": "error",
+          "resultKind": "text"
+        }
+      ]
+    }
+  ]
+}

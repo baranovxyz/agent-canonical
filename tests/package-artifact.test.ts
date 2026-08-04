@@ -1,4 +1,5 @@
 import { execFile } from "node:child_process";
+import { readFileSync } from "node:fs";
 import {
   copyFile,
   cp,
@@ -19,6 +20,9 @@ import { z } from "zod";
 
 const execFileAsync = promisify(execFile);
 const packageRoot = fileURLToPath(new URL("../", import.meta.url));
+const packageManifest = z
+  .object({ version: z.string() })
+  .parse(JSON.parse(readFileSync(join(packageRoot, "package.json"), "utf8")));
 
 const exportTargetSchema = z
   .object({
@@ -30,7 +34,7 @@ const exportTargetSchema = z
 const packedManifestSchema = z
   .object({
     name: z.literal("agent-canonical"),
-    version: z.literal("0.2.1"),
+    version: z.literal(packageManifest.version),
     peerDependencies: z
       .object({
         zod: z.string(),
@@ -98,6 +102,18 @@ const expectedExports: Record<string, ExportTarget> = {
   "./parsers/copilot": {
     types: "./dist/parsers/copilot/index.d.ts",
     default: "./dist/parsers/copilot/index.js",
+  },
+  "./parsers/pi": {
+    types: "./dist/parsers/pi/index.d.ts",
+    default: "./dist/parsers/pi/index.js",
+  },
+  "./parsers/droid": {
+    types: "./dist/parsers/droid/index.d.ts",
+    default: "./dist/parsers/droid/index.js",
+  },
+  "./parsers/vibe": {
+    types: "./dist/parsers/vibe/index.d.ts",
+    default: "./dist/parsers/vibe/index.js",
   },
 };
 
