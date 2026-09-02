@@ -133,286 +133,283 @@ describe("Codex exact-version certification", () => {
     }
   });
 
-  it.each(EVIDENCE_FIXTURES)(
-    "$cliVersion capture parses, validates, and classifies exhaustively",
-    async (evidence) => {
-      const path = fixturePath(evidence.fixture);
-      const lines = await fixtureLines(path);
-      for (const line of lines) {
-        const classification = classifyCodexJsonLine(line);
-        expect(classification.kind).not.toBe("unclassified");
-        if (classification.kind === "explicitly-ignored") {
-          expect(classification.reason).toMatch(
-            /^(noncanonical-state-snapshot|transport-metadata-only|duplicate-derived-message|lifecycle-bookkeeping)$/,
-          );
-        }
+  it.each(
+    EVIDENCE_FIXTURES,
+  )("$cliVersion capture parses, validates, and classifies exhaustively", async (evidence) => {
+    const path = fixturePath(evidence.fixture);
+    const lines = await fixtureLines(path);
+    for (const line of lines) {
+      const classification = classifyCodexJsonLine(line);
+      expect(classification.kind).not.toBe("unclassified");
+      if (classification.kind === "explicitly-ignored") {
+        expect(classification.reason).toMatch(
+          /^(noncanonical-state-snapshot|transport-metadata-only|duplicate-derived-message|lifecycle-bookkeeping)$/,
+        );
       }
+    }
 
-      const result = await parseSessionFile(path);
-      expect(result.success).toBe(true);
-      if (!result.success) return;
-      expect(SessionSchema.safeParse(result.data).success).toBe(true);
-      expect(result.data.id).toBe(evidence.golden.sessionId);
-      expect(
-        result.data.transcript.messages
-          .filter(
-            (message) =>
-              message.role === "user" ||
-              message.role === "assistant" ||
-              message.role === "thinking",
-          )
-          .map((message) => [message.role, message.text]),
-      ).toEqual(evidence.golden.messages);
-      expect(
-        result.data.transcript.messages.flatMap((message) =>
-          message.toolCalls.map((tool) => [tool.name, tool.outputFull ?? ""]),
-        ),
-      ).toEqual(evidence.golden.tools);
-      expect(result.data.transcript.inputTokens).toBe(
-        evidence.golden.tokens.input,
-      );
-      expect(result.data.transcript.outputTokens).toBe(
-        evidence.golden.tokens.output,
-      );
-      expect(result.data.transcript.cacheReadTokens).toBe(
-        evidence.golden.tokens.cacheRead,
-      );
-      expect(result.data.transcript.cacheCreationTokens).toBe(
-        evidence.golden.tokens.cacheCreation,
-      );
-      expect(result.data.transcript.reasoningTokens).toBe(
-        evidence.golden.tokens.reasoning,
-      );
-      expect(result.data.transcript.abortedTurns ?? 0).toBe(
-        evidence.golden.abortedTurns,
-      );
+    const result = await parseSessionFile(path);
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(SessionSchema.safeParse(result.data).success).toBe(true);
+    expect(result.data.id).toBe(evidence.golden.sessionId);
+    expect(
+      result.data.transcript.messages
+        .filter(
+          (message) =>
+            message.role === "user" ||
+            message.role === "assistant" ||
+            message.role === "thinking",
+        )
+        .map((message) => [message.role, message.text]),
+    ).toEqual(evidence.golden.messages);
+    expect(
+      result.data.transcript.messages.flatMap((message) =>
+        message.toolCalls.map((tool) => [tool.name, tool.outputFull ?? ""]),
+      ),
+    ).toEqual(evidence.golden.tools);
+    expect(result.data.transcript.inputTokens).toBe(
+      evidence.golden.tokens.input,
+    );
+    expect(result.data.transcript.outputTokens).toBe(
+      evidence.golden.tokens.output,
+    );
+    expect(result.data.transcript.cacheReadTokens).toBe(
+      evidence.golden.tokens.cacheRead,
+    );
+    expect(result.data.transcript.cacheCreationTokens).toBe(
+      evidence.golden.tokens.cacheCreation,
+    );
+    expect(result.data.transcript.reasoningTokens).toBe(
+      evidence.golden.tokens.reasoning,
+    );
+    expect(result.data.transcript.abortedTurns ?? 0).toBe(
+      evidence.golden.abortedTurns,
+    );
 
-      const rawRecords = lines.map((line) => {
-        const parsed: unknown = JSON.parse(line);
-        return RawLineSchema.parse(parsed);
-      });
-      const sessionMetaRecords = rawRecords.filter(
-        (record) => record.type === "session_meta",
-      );
-      expect(sessionMetaRecords).toHaveLength(1);
-      expect(result.data.parentSessionId).toBeUndefined();
-      expect(result.data.agentType).toBeUndefined();
-      const rootMetadata = z
+    const rawRecords = lines.map((line) => {
+      const parsed: unknown = JSON.parse(line);
+      return RawLineSchema.parse(parsed);
+    });
+    const sessionMetaRecords = rawRecords.filter(
+      (record) => record.type === "session_meta",
+    );
+    expect(sessionMetaRecords).toHaveLength(1);
+    expect(result.data.parentSessionId).toBeUndefined();
+    expect(result.data.agentType).toBeUndefined();
+    const rootMetadata = z
+      .object({
+        forked_from_id: z.string().optional(),
+        parent_thread_id: z.string().optional(),
+        thread_source: z.string().optional(),
+        agent_path: z.string().optional(),
+        source: z
+          .object({ subagent: z.unknown().optional() })
+          .passthrough()
+          .optional(),
+      })
+      .passthrough()
+      .parse(sessionMetaRecords[0]?.payload);
+    expect(rootMetadata.forked_from_id).toBeUndefined();
+    expect(rootMetadata.parent_thread_id).toBeUndefined();
+    expect(rootMetadata.thread_source).not.toBe("subagent");
+    expect(rootMetadata.agent_path).toBeUndefined();
+    expect(rootMetadata.source?.subagent).toBeUndefined();
+    const taskStartedRecords = rawRecords.flatMap((record) => {
+      if (record.type !== "event_msg") return [];
+      const payload = z
         .object({
-          forked_from_id: z.string().optional(),
-          parent_thread_id: z.string().optional(),
-          thread_source: z.string().optional(),
-          agent_path: z.string().optional(),
-          source: z
-            .object({ subagent: z.unknown().optional() })
-            .passthrough()
-            .optional(),
+          type: z.literal("task_started"),
+          started_at: z.number().int().nonnegative(),
         })
-        .passthrough()
-        .parse(sessionMetaRecords[0]?.payload);
-      expect(rootMetadata.forked_from_id).toBeUndefined();
-      expect(rootMetadata.parent_thread_id).toBeUndefined();
-      expect(rootMetadata.thread_source).not.toBe("subagent");
-      expect(rootMetadata.agent_path).toBeUndefined();
-      expect(rootMetadata.source?.subagent).toBeUndefined();
-      const taskStartedRecords = rawRecords.flatMap((record) => {
-        if (record.type !== "event_msg") return [];
+        .safeParse(record.payload);
+      if (!payload.success || record.timestamp === undefined) return [];
+      return [
+        {
+          recordSeconds: Date.parse(record.timestamp) / 1000,
+          startedAt: payload.data.started_at,
+        },
+      ];
+    });
+    // The initial evidence rows are root captures. Replay captures need the
+    // reducer's contextual replay detection instead of this ordered-time check.
+    expect(taskStartedRecords.length).toBeGreaterThan(0);
+    for (const boundary of taskStartedRecords) {
+      expect(
+        Math.abs(boundary.startedAt - boundary.recordSeconds),
+      ).toBeLessThanOrEqual(1);
+    }
+    const responseTypes = new Set(
+      rawRecords
+        .filter((record) => record.type === "response_item")
+        .map((record) => {
+          const payload = PayloadTypeSchema.safeParse(record.payload);
+          return payload.success ? payload.data.type : undefined;
+        }),
+    );
+    const eventTypes = new Set(
+      rawRecords
+        .filter((record) => record.type === "event_msg")
+        .map((record) => {
+          const payload = PayloadTypeSchema.safeParse(record.payload);
+          return payload.success ? payload.data.type : undefined;
+        }),
+    );
+    const primaryMessages = rawRecords
+      .filter((record) => record.type === "response_item")
+      .flatMap((record) => {
         const payload = z
           .object({
-            type: z.literal("task_started"),
-            started_at: z.number().int().nonnegative(),
+            type: z.literal("message"),
+            role: z.enum(["user", "assistant"]),
+            content: z.array(z.object({ text: z.string().optional() })),
           })
           .safeParse(record.payload);
-        if (!payload.success || record.timestamp === undefined) return [];
+        if (!payload.success) return [];
         return [
           {
-            recordSeconds: Date.parse(record.timestamp) / 1000,
-            startedAt: payload.data.started_at,
+            role: payload.data.role,
+            text: payload.data.content
+              .map((part) => part.text ?? "")
+              .filter(Boolean)
+              .join("\n\n"),
           },
         ];
       });
-      // The initial evidence rows are root captures. Replay captures need the
-      // reducer's contextual replay detection instead of this ordered-time check.
-      expect(taskStartedRecords.length).toBeGreaterThan(0);
-      for (const boundary of taskStartedRecords) {
-        expect(
-          Math.abs(boundary.startedAt - boundary.recordSeconds),
-        ).toBeLessThanOrEqual(1);
-      }
-      const responseTypes = new Set(
-        rawRecords
-          .filter((record) => record.type === "response_item")
-          .map((record) => {
-            const payload = PayloadTypeSchema.safeParse(record.payload);
-            return payload.success ? payload.data.type : undefined;
-          }),
-      );
-      const eventTypes = new Set(
-        rawRecords
-          .filter((record) => record.type === "event_msg")
-          .map((record) => {
-            const payload = PayloadTypeSchema.safeParse(record.payload);
-            return payload.success ? payload.data.type : undefined;
-          }),
-      );
-      const primaryMessages = rawRecords
-        .filter((record) => record.type === "response_item")
-        .flatMap((record) => {
-          const payload = z
-            .object({
-              type: z.literal("message"),
-              role: z.enum(["user", "assistant"]),
-              content: z.array(z.object({ text: z.string().optional() })),
-            })
-            .safeParse(record.payload);
-          if (!payload.success) return [];
-          return [
-            {
-              role: payload.data.role,
-              text: payload.data.content
-                .map((part) => part.text ?? "")
-                .filter(Boolean)
-                .join("\n\n"),
-            },
-          ];
-        });
-      for (const record of rawRecords) {
-        if (record.type === "event_msg") {
-          const duplicate = z
-            .object({
-              type: z.enum(["user_message", "agent_message"]),
-              message: z.string(),
-            })
-            .safeParse(record.payload);
-          if (duplicate.success) {
-            const role =
-              duplicate.data.type === "user_message" ? "user" : "assistant";
-            expect(primaryMessages).toContainEqual({
-              role,
-              text: duplicate.data.message,
-            });
-          }
-        }
-        if (record.type === "response_item") {
-          const duplicate = z
-            .object({
-              type: z.literal("agent_message"),
-              content: z.array(z.object({ text: z.string().optional() })),
-            })
-            .safeParse(record.payload);
-          if (duplicate.success) {
-            expect(primaryMessages).toContainEqual({
-              role: "assistant",
-              text: duplicate.data.content
-                .map((part) => part.text ?? "")
-                .filter(Boolean)
-                .join("\n\n"),
-            });
-          }
-        }
-      }
-      expect(responseTypes.has("reasoning")).toBe(true);
-      expect(responseTypes.has("message")).toBe(true);
-      expect(responseTypes.has("function_call")).toBe(
-        evidence.scenarios.functionTool,
-      );
-      expect(responseTypes.has("custom_tool_call")).toBe(
-        evidence.scenarios.customTool,
-      );
-      expect(eventTypes.has("token_count")).toBe(true);
-      expect(eventTypes.has("task_started")).toBe(true);
-      expect(eventTypes.has("task_complete")).toBe(true);
-      expect(evidence.scenarios.abort).toBe(true);
-      expect(eventTypes.has("turn_aborted")).toBe(true);
-      const ignoredKeys = new Set<string>();
-      for (const record of rawRecords) {
-        const payload = PayloadTypeSchema.safeParse(record.payload);
-        const key =
-          record.type === "event_msg" || record.type === "response_item"
-            ? `${record.type}:${payload.success ? payload.data.type : ""}`
-            : record.type;
-        const classification = classifyCodexRawRecord(record);
-        if (
-          classification.kind === "explicitly-ignored" &&
-          key !== undefined &&
-          evidence.scenarios.ignored.includes(key)
-        ) {
-          ignoredKeys.add(key);
-        }
-      }
-      expect([...ignoredKeys].sort()).toEqual(
-        [...evidence.scenarios.ignored].sort(),
-      );
-    },
-  );
-
-  it.each(EVIDENCE_FIXTURES)(
-    "$cliVersion full and incremental streams preserve semantic signals",
-    async (evidence) => {
-      const path = fixturePath(evidence.fixture);
-      const lines = await fixtureLines(path);
-      const full = await parseSessionFile(path);
-      expect(full.success).toBe(true);
-      if (!full.success) return;
-
-      const tempDir = await mkdtemp(join(tmpdir(), "codex-certification-"));
-      const tempPath = join(tempDir, "rollout.jsonl");
-      try {
-        await writeFile(tempPath, "", "utf8");
-        const cursor = await snapshotCursor(tempPath);
-        await writeFile(tempPath, `${lines.join("\n")}\n`, "utf8");
-        const incremental = await readEventsSince(tempPath, cursor);
-        expect(incremental.success).toBe(true);
-        if (!incremental.success) return;
-
-        const fullMessages = full.data.transcript.messages
-          .filter(
-            (message) =>
-              message.role === "user" ||
-              message.role === "assistant" ||
-              message.role === "thinking",
-          )
-          .map((message) => ({ role: message.role, text: message.text }));
-        const incrementalMessages = incremental.data.events
-          .filter(
-            (event) =>
-              event.kind === "user" ||
-              event.kind === "assistant" ||
-              event.kind === "thinking",
-          )
-          .map((event) => ({ role: event.kind, text: event.text }));
-        expect(incrementalMessages).toEqual(fullMessages);
-
-        const fullToolNames = full.data.transcript.messages.flatMap((message) =>
-          message.toolCalls.map((tool) => tool.name),
-        );
-        const incrementalToolNames = incremental.data.events
-          .filter((event) => event.kind === "tool-call")
-          .map((event) => event.name);
-        expect(incrementalToolNames).toEqual(fullToolNames);
-
-        const fullTerminalSignals = lines
-          .map((line, seq) => decodeLine(line, seq, new IssueCollector()))
-          .map((event) => {
-            if (event.kind === "event_msg_task_complete")
-              return "task_complete";
-            if (event.kind === "event_msg_turn_aborted") return "turn_aborted";
-            return undefined;
+    for (const record of rawRecords) {
+      if (record.type === "event_msg") {
+        const duplicate = z
+          .object({
+            type: z.enum(["user_message", "agent_message"]),
+            message: z.string(),
           })
-          .filter(
-            (signal): signal is "task_complete" | "turn_aborted" =>
-              signal !== undefined,
-          );
-        const incrementalTerminalSignals = incremental.data.events
-          .filter((event) => event.kind === "turn-end")
-          .map((event) => event.signal);
-        expect(incrementalTerminalSignals).toEqual(evidence.golden.turnEnds);
-        expect(incrementalTerminalSignals).toEqual(fullTerminalSignals);
-      } finally {
-        await rm(tempDir, { recursive: true, force: true });
+          .safeParse(record.payload);
+        if (duplicate.success) {
+          const role =
+            duplicate.data.type === "user_message" ? "user" : "assistant";
+          expect(primaryMessages).toContainEqual({
+            role,
+            text: duplicate.data.message,
+          });
+        }
       }
-    },
-  );
+      if (record.type === "response_item") {
+        const duplicate = z
+          .object({
+            type: z.literal("agent_message"),
+            content: z.array(z.object({ text: z.string().optional() })),
+          })
+          .safeParse(record.payload);
+        if (duplicate.success) {
+          expect(primaryMessages).toContainEqual({
+            role: "assistant",
+            text: duplicate.data.content
+              .map((part) => part.text ?? "")
+              .filter(Boolean)
+              .join("\n\n"),
+          });
+        }
+      }
+    }
+    expect(responseTypes.has("reasoning")).toBe(true);
+    expect(responseTypes.has("message")).toBe(true);
+    expect(responseTypes.has("function_call")).toBe(
+      evidence.scenarios.functionTool,
+    );
+    expect(responseTypes.has("custom_tool_call")).toBe(
+      evidence.scenarios.customTool,
+    );
+    expect(eventTypes.has("token_count")).toBe(true);
+    expect(eventTypes.has("task_started")).toBe(true);
+    expect(eventTypes.has("task_complete")).toBe(true);
+    expect(evidence.scenarios.abort).toBe(true);
+    expect(eventTypes.has("turn_aborted")).toBe(true);
+    const ignoredKeys = new Set<string>();
+    for (const record of rawRecords) {
+      const payload = PayloadTypeSchema.safeParse(record.payload);
+      const key =
+        record.type === "event_msg" || record.type === "response_item"
+          ? `${record.type}:${payload.success ? payload.data.type : ""}`
+          : record.type;
+      const classification = classifyCodexRawRecord(record);
+      if (
+        classification.kind === "explicitly-ignored" &&
+        key !== undefined &&
+        evidence.scenarios.ignored.includes(key)
+      ) {
+        ignoredKeys.add(key);
+      }
+    }
+    expect([...ignoredKeys].sort()).toEqual(
+      [...evidence.scenarios.ignored].sort(),
+    );
+  });
+
+  it.each(
+    EVIDENCE_FIXTURES,
+  )("$cliVersion full and incremental streams preserve semantic signals", async (evidence) => {
+    const path = fixturePath(evidence.fixture);
+    const lines = await fixtureLines(path);
+    const full = await parseSessionFile(path);
+    expect(full.success).toBe(true);
+    if (!full.success) return;
+
+    const tempDir = await mkdtemp(join(tmpdir(), "codex-certification-"));
+    const tempPath = join(tempDir, "rollout.jsonl");
+    try {
+      await writeFile(tempPath, "", "utf8");
+      const cursor = await snapshotCursor(tempPath);
+      await writeFile(tempPath, `${lines.join("\n")}\n`, "utf8");
+      const incremental = await readEventsSince(tempPath, cursor);
+      expect(incremental.success).toBe(true);
+      if (!incremental.success) return;
+
+      const fullMessages = full.data.transcript.messages
+        .filter(
+          (message) =>
+            message.role === "user" ||
+            message.role === "assistant" ||
+            message.role === "thinking",
+        )
+        .map((message) => ({ role: message.role, text: message.text }));
+      const incrementalMessages = incremental.data.events
+        .filter(
+          (event) =>
+            event.kind === "user" ||
+            event.kind === "assistant" ||
+            event.kind === "thinking",
+        )
+        .map((event) => ({ role: event.kind, text: event.text }));
+      expect(incrementalMessages).toEqual(fullMessages);
+
+      const fullToolNames = full.data.transcript.messages.flatMap((message) =>
+        message.toolCalls.map((tool) => tool.name),
+      );
+      const incrementalToolNames = incremental.data.events
+        .filter((event) => event.kind === "tool-call")
+        .map((event) => event.name);
+      expect(incrementalToolNames).toEqual(fullToolNames);
+
+      const fullTerminalSignals = lines
+        .map((line, seq) => decodeLine(line, seq, new IssueCollector()))
+        .map((event) => {
+          if (event.kind === "event_msg_task_complete") return "task_complete";
+          if (event.kind === "event_msg_turn_aborted") return "turn_aborted";
+          return undefined;
+        })
+        .filter(
+          (signal): signal is "task_complete" | "turn_aborted" =>
+            signal !== undefined,
+        );
+      const incrementalTerminalSignals = incremental.data.events
+        .filter((event) => event.kind === "turn-end")
+        .map((event) => event.signal);
+      expect(incrementalTerminalSignals).toEqual(evidence.golden.turnEnds);
+      expect(incrementalTerminalSignals).toEqual(fullTerminalSignals);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
 
   it("keeps unknown records unclassified while naming every explicit ignore", () => {
     expect(
