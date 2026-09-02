@@ -51,6 +51,10 @@ export type DecodedContentPart = z.infer<typeof ContentPartSchema>;
 
 const RawLineSchema = z.object({
   role: z.string().optional(),
+  /** Present on control records only (`turn_ended`); absent on message lines. */
+  type: z.string().optional(),
+  /** Outcome carried by a `turn_ended` control record. */
+  status: z.string().optional(),
   message: z
     .object({
       content: z.array(z.record(z.string(), z.unknown())).optional(),
@@ -110,6 +114,18 @@ export interface DecodedAssistantLine {
   parts: DecodedPart[];
 }
 
+/**
+ * The `{"type":"turn_ended","status":…}` control record cursor-agent appends
+ * when a turn yields back to the operator. `status` is carried verbatim —
+ * `"success"`, `"aborted"` and `"error"` are the values observed in practice,
+ * and an unrecognised one must not be mistaken for a clean finish.
+ */
+export interface DecodedTurnEndedLine {
+  kind: "turn_ended";
+  seq: number;
+  status: string;
+}
+
 export interface DecodedMalformed {
   kind: "malformed";
   seq: number;
@@ -123,6 +139,7 @@ export interface DecodedSkip {
 export type DecodedEvent =
   | DecodedUserLine
   | DecodedAssistantLine
+  | DecodedTurnEndedLine
   | DecodedMalformed
   | DecodedSkip;
 
@@ -262,6 +279,14 @@ export function decodeLine(
   }
 
   const obj: RawLine = result.data;
+
+  // Control records carry `type` instead of `role`. `turn_ended` is the
+  // dialect's own terminal marker — decode it before the role check, which
+  // would otherwise drop it as an unknown line.
+  if (obj.type === "turn_ended") {
+    return { kind: "turn_ended", seq, status: obj.status ?? "" };
+  }
+
   const role = obj.role;
 
   if (role !== "user" && role !== "assistant") {

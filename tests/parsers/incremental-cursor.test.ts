@@ -65,6 +65,12 @@ function assistantToolUseLine(text: string, toolName = "Shell"): string {
   })}\n`;
 }
 
+function turnEndedLine(status: string): string {
+  // The control record cursor-agent appends when a turn yields back to the
+  // operator. Carries no role and no message body.
+  return `${JSON.stringify({ type: "turn_ended", status })}\n`;
+}
+
 // ---------------------------------------------------------------------------
 // Test fixtures
 // ---------------------------------------------------------------------------
@@ -125,11 +131,14 @@ describe("readEventsSince — full turn", () => {
       "TCP uses a 3-way handshake.",
     );
 
+    // No `turn_ended` record in this file, so the turn-end is the content
+    // heuristic — emitted, but flagged as a guess.
     const turnEnd = events.find((e) => e.kind === "turn-end");
     expect(turnEnd).toMatchObject({
       kind: "turn-end",
       outcome: "completed",
       signal: "assistant-final-text",
+      confidence: "inferred",
     });
   });
 
@@ -145,6 +154,86 @@ describe("readEventsSince — full turn", () => {
       expect(userEvent.text).not.toContain("<user_query>");
       expect(userEvent.text).not.toContain("<timestamp>");
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// readEventsSince — turn_ended control record
+// ---------------------------------------------------------------------------
+
+describe("readEventsSince — turn_ended control record", () => {
+  it('status "success" yields an explicit completed turn-end', async () => {
+    await writeFile(
+      filePath,
+      `${userLine("explain TCP")}${assistantLine("It handshakes.")}${turnEndedLine("success")}`,
+    );
+
+    const result = await readEventsSince(filePath);
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+
+    const explicit = result.data.events.find(
+      (e) => e.kind === "turn-end" && e.signal === "turn_ended",
+    );
+    expect(explicit).toMatchObject({
+      kind: "turn-end",
+      outcome: "completed",
+      signal: "turn_ended",
+      confidence: "explicit",
+    });
+  });
+
+  it('status "aborted" yields an aborted outcome', async () => {
+    await writeFile(
+      filePath,
+      `${userLine("explain TCP")}${assistantLine("It hand")}${turnEndedLine("aborted")}`,
+    );
+
+    const result = await readEventsSince(filePath);
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+
+    expect(
+      result.data.events.find(
+        (e) => e.kind === "turn-end" && e.signal === "turn_ended",
+      ),
+    ).toMatchObject({ outcome: "aborted", confidence: "explicit" });
+  });
+
+  it("an unrecognised status is NOT reported as a clean finish", async () => {
+    // `error` is observed in the wild alongside success/aborted. Anything the
+    // dialect does not call a success must not be decoded as one.
+    await writeFile(
+      filePath,
+      `${userLine("explain TCP")}${assistantLine("It hand")}${turnEndedLine("error")}`,
+    );
+
+    const result = await readEventsSince(filePath);
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+
+    expect(
+      result.data.events.find(
+        (e) => e.kind === "turn-end" && e.signal === "turn_ended",
+      ),
+    ).toMatchObject({ outcome: "aborted" });
+  });
+
+  it("the explicit marker follows the inferred one, so a consumer can prefer it", async () => {
+    await writeFile(
+      filePath,
+      `${userLine("explain TCP")}${assistantLine("It handshakes.")}${turnEndedLine("aborted")}`,
+    );
+
+    const result = await readEventsSince(filePath);
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+
+    const turnEnds = result.data.events.filter((e) => e.kind === "turn-end");
+    expect(turnEnds.map((e) => e.kind === "turn-end" && e.confidence)).toEqual([
+      "inferred",
+      "explicit",
+    ]);
   });
 });
 

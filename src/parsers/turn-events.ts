@@ -20,25 +20,41 @@
  * - `tool-call` — the agent invoked a tool. Surfaced so consumers can
  *   observe what a session is doing/asking mid-turn (e.g. claude-code
  *   AskUserQuestion blocks land here the moment they are emitted).
- * - `turn-end` — the dialect's explicit terminal signal, decoded as an
- *   event fact: claude-code assistant `stop_reason` ∈ {end_turn,
- *   stop_sequence, max_tokens}; codex `event_msg` `task_complete` /
- *   `turn_aborted`; opencode `error.name == "MessageAbortedError"` or a
- *   non-`"tool-calls"` assistant finish with no decoded tool part;
- *   cursor-agent's content rule (an atomically-written assistant record with
- *   no tool_use part means the agent yielded). `signal` carries the raw
+ * - `background-work` — the dialect's own record says work it dispatched is
+ *   still outstanding at what would otherwise be a terminal signal
+ *   claude-code's assistant `stop_reason ∈ {end_turn,
+ *   stop_sequence, max_tokens}` paired with a `system`/`turn_duration`
+ *   record whose `pendingBackgroundAgentCount` is still positive. Emitted
+ *   INSTEAD OF a `turn-end` for that record — a turn is not over while its
+ *   own transcript still reports outstanding work, so this event kind exists
+ *   precisely so no `turn-end` is produced here. `count` is always > 0.
+ * - `turn-end` — the dialect's terminal signal, decoded as an event fact:
+ *   claude-code assistant `stop_reason` ∈ {end_turn, stop_sequence,
+ *   max_tokens}; codex `event_msg` `task_complete` / `turn_aborted`;
+ *   opencode `error.name == "MessageAbortedError"` or a non-`"tool-calls"`
+ *   assistant finish with no decoded tool part; cursor-agent's
+ *   `{"type":"turn_ended","status":…}` record. `signal` carries the raw
  *   per-CLI marker name.
+ *
+ *   `confidence` separates a marker the CLI wrote from one the parser
+ *   inferred. Absent means `"explicit"` — the dialect stated the turn was
+ *   over. `"inferred"` means the dialect wrote no marker and the event comes
+ *   from a content heuristic, which can fire before the agent has actually
+ *   yielded; consumers that must not end a turn early should require an
+ *   independent signal (e.g. an idle pane) before honouring one.
  */
 export type TurnEvent =
   | { kind: "user"; ts?: number; text: string }
   | { kind: "assistant"; ts?: number; text: string }
   | { kind: "thinking"; ts?: number; text: string }
   | { kind: "tool-call"; ts?: number; name: string; callId?: string }
+  | { kind: "background-work"; ts?: number; count: number }
   | {
       kind: "turn-end";
       ts?: number;
       outcome: "completed" | "aborted";
       signal: string;
+      confidence?: "explicit" | "inferred";
     };
 
 /**

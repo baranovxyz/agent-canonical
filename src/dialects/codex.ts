@@ -1,3 +1,4 @@
+import { CODEX_CAPTURE_EVIDENCE } from "./codex-evidence.js";
 import type { DialectDescriptor } from "./types.js";
 
 /**
@@ -31,5 +32,8 @@ export const codex: DialectDescriptor = {
     questionAwaitingOnDisk: false,
     permissionAwaitingOnDisk: false,
     perMessageUsage: false,
+  },
+  validatedAgainst: {
+    cliVersions: CODEX_CAPTURE_EVIDENCE.map((evidence) => evidence.cliVersion),
   },
 };

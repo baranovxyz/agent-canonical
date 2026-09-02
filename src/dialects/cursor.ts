@@ -19,17 +19,19 @@ export const cursor: DialectDescriptor = {
     watermarkAxis: "byte-offset",
   },
   turnEnd: {
-    kind: "derived",
+    kind: "explicit",
     description:
-      "no terminal marker on disk; derived — the latest assistant record after the prompt anchor is text-only (no tool_use part)",
+      'a {"type":"turn_ended","status":…} control record is appended after the final assistant record; status "success" completes, any other status aborts. Turns torn down before it flushes fall back to the derived rule (latest assistant record after the prompt anchor is text-only), which is emitted as an inferred signal',
+    abortDescription:
+      'the same turn_ended record with a non-"success" status ("aborted" and "error" observed)',
   },
   configPaths: {
     globalDir: "~/.cursor",
   },
   capabilities: {
     incrementalRead: true,
-    explicitTurnEnd: false,
-    abortSignalOnDisk: false,
+    explicitTurnEnd: true,
+    abortSignalOnDisk: true,
     questionAwaitingOnDisk: false,
     permissionAwaitingOnDisk: false,
     perMessageUsage: false,

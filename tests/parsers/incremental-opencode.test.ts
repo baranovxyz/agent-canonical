@@ -368,26 +368,24 @@ describe("readEventsSince — abort wins over finish", () => {
 });
 
 describe("readEventsSince — finish reasons", () => {
-  it.each([
-    "unknown",
-    "length",
-    "content-filter",
-    "error",
-  ])("finish:%s produces a completed turn-end with the raw signal", (finish) => {
-    const messages: FakeRow[] = [
-      msgRow("m1", { role: "assistant", finish }, 1000),
-    ];
-    const db = makeDb(messages, []);
-    const result = readEventsSince(db, SESSION_ID);
-    expect(result.success).toBe(true);
-    if (!result.success) return;
-    expect(result.data.events).toContainEqual({
-      kind: "turn-end",
-      ts: 1,
-      outcome: "completed",
-      signal: finish,
-    });
-  });
+  it.each(["unknown", "length", "content-filter", "error"])(
+    "finish:%s produces a completed turn-end with the raw signal",
+    (finish) => {
+      const messages: FakeRow[] = [
+        msgRow("m1", { role: "assistant", finish }, 1000),
+      ];
+      const db = makeDb(messages, []);
+      const result = readEventsSince(db, SESSION_ID);
+      expect(result.success).toBe(true);
+      if (!result.success) return;
+      expect(result.data.events).toContainEqual({
+        kind: "turn-end",
+        ts: 1,
+        outcome: "completed",
+        signal: finish,
+      });
+    },
+  );
 
   it("finish:tool-calls remains nonterminal", () => {
     const messages: FakeRow[] = [

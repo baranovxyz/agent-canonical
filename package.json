@@ -1,6 +1,6 @@
 {
   "devDependencies": {
-    "@biomejs/biome": "2.5.2",
+    "@biomejs/biome": "2.5.8",
     "@types/node": "^22.20.1",
     "tsup": "^8.0.0",
     "typescript": "5.9.3",
@@ -8,7 +8,7 @@
     "zod": "4.4.3"
   },
   "name": "agent-canonical",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Canonical session/transcript schemas and per-CLI transcript-format knowledge for AI coding agents (claude-code, codex, opencode, cursor, gemini, qwen, kilo, goose, cline, copilot, pi, droid, vibe)",
   "keywords": [
     "coding-agent",
