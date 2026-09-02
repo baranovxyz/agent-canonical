@@ -2,6 +2,44 @@
 
 Notable agent-canonical changes only. Detailed implementation notes belong in commit history.
 
+## 0.4.0 - 2026-09-02
+
+- Decode cursor-agent's `{"type":"turn_ended","status":…}` control record as the authoritative
+  turn-end signal instead of inferring completion from message shape alone, which could not express
+  an abort and misfired on mid-turn text-only records (46 of 335 captured transcripts). The
+  content-shape check remains as a fallback for turns torn down before the record flushes (17 of
+  335). Canonical turn-end events now carry an optional `confidence` field (`"explicit"` or
+  `"inferred"`, absent meaning explicit); the other three incremental dialects are unaffected.
+- Stop reading codex's post-interrupt `<turn_aborted>` notice — a synthetic `role:"user"` record
+  wrapping the tag, injected immediately before the real turn-end event — as an ordinary user turn.
+  Every consumer that scopes a turn up to the next `user` event was stopping the scan one record
+  early and never reaching the abort behind it, so an interrupted codex turn could sit unresolved
+  for its full read budget despite an explicit `turn_aborted` already on disk.
+- Read claude-code's synthetic interrupt marker (`[Request interrupted by user]` /
+  `[Request interrupted by user for tool use]`, matched as an exact whole record, never a
+  substring) as an aborted `turn-end` event instead of an ordinary operator turn, so an interrupted
+  claude-code turn resolves from the transcript instead of exhausting its read budget and falling
+  back to a pane heuristic.
+- Add a `background-work` canonical event for claude-code: a terminal `stop_reason` paired with a
+  `system`/`turn_duration` record whose `pendingBackgroundAgentCount` is still positive emits
+  `background-work` instead of `turn-end`, so a turn that dispatched background agents is not
+  reported complete while they remain outstanding. A terminal `stop_reason` with no ledger record
+  yet — the two are separate appends about 100ms apart — emits nothing at all within a bounded
+  freshness window (a missing record there is inconclusive, not a confirmed zero) and only degrades
+  to an ordinary `turn-end` once that window has passed, so a session that never writes the ledger
+  still completes normally.
+- Stop emitting a `user` turn event for claude-code records the CLI itself flags `isMeta` — its own
+  synthetic injections, e.g. the skill body appended when a Skill loads. Because every `user` event
+  is a turn boundary, one of these synthetic records could close the turn window before the turn's
+  own terminal signal was reached, stranding a completed reply as "still in progress." The session
+  reducer is unaffected; only the turn-scoped incremental event stream changes. `DecodedUserText`
+  and `DecodedUserArray` gained a new `isMeta` field reporting the raw flag.
+- Add exact-version Codex transcript certification evidence for 0.141.0 and 0.150.1.
+  Certification uses strict evidence-only schemas, exhaustive handled/ignored/unclassified record
+  accounting, semantic scenario assertions, and full/incremental parity while the production
+  decoder remains forward-tolerant.
+- Reformatted under Biome 2.5.8 (test-file argument wrapping only; no behavior change).
+
 ## 0.3.0 - 2026-08-04
 
 - Added a `/parsers/vibe` entry for Mistral Vibe (`mistral-vibe` on PyPI, binary `vibe`). Vibe

@@ -314,6 +314,43 @@ describe("codex incremental reader", () => {
     });
   });
 
+  it("does not read codex's own <turn_aborted> notice as an operator turn", async () => {
+    // What a REAL interrupt writes (captured live, codex 0.141.0): codex injects
+    // its own `role: "user"` bookkeeping record wrapping <turn_aborted>, and only
+    // THEN the event_msg carrying the turn-end. Consumers scope a turn from its
+    // anchor up to the next user event, so emitting a user event here ends the
+    // scan one record early and the abort is never seen — the interrupted turn
+    // then cannot settle and its caller waits out the full ttl.
+    await writeFile(filePath, "");
+    const cursor = await snapshotCursor(filePath);
+
+    const fh = await open(filePath, "a");
+    try {
+      await fh.appendFile(
+        `${userLine("do a thing")}${assistantLine("part")}${userLine(
+          "<turn_aborted>\nThe user interrupted the previous turn on purpose. Any running unified exec processes may still be running in the background. If any tools/commands were aborted, they may have partially executed.\n</turn_aborted>",
+        )}${eventMsgLine("turn_aborted")}`,
+      );
+    } finally {
+      await fh.close();
+    }
+
+    const result = await readEventsSince(filePath, cursor);
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    const userTexts = result.data.events
+      .filter((e) => e.kind === "user")
+      .map((e) => e.text);
+    expect(userTexts).toEqual(["do a thing"]);
+    // …and the abort is still reported, so the turn can settle by cause.
+    expect(result.data.events.find((e) => e.kind === "turn-end")).toMatchObject(
+      {
+        outcome: "aborted",
+        signal: "turn_aborted",
+      },
+    );
+  });
+
   it("reasoning ⇒ thinking event (trimmed, non-empty)", async () => {
     await writeFile(filePath, "");
     const cursor = await snapshotCursor(filePath);

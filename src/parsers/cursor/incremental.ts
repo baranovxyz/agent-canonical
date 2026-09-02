@@ -5,13 +5,19 @@
  *   - `snapshotCursor` — pre-turn byte-offset watermark (wraps snapshotFileCursor)
  *   - `readEventsSince` — decode all new `TurnEvent`s appended past a cursor
  *
- * Turn-end detection uses a content rule rather than an explicit terminal field:
- * cursor-agent writes records atomically and a mid-turn record always carries a
- * `tool_use` part (signalling the agent is about to run a tool). An assistant
- * record with NO `tool_use` part means the agent yielded — the turn is complete.
- * The residual case (a turn that ends genuinely on a `tool_use` with no closing
- * text) emits no `turn-end` event. Callers must apply their own timeout or
- * fallback policy for that case.
+ * Turn-end detection is two-tier. cursor-agent appends its own terminal record —
+ * `{"type":"turn_ended","status":"success"|"aborted"|"error"}` — and that marker
+ * is authoritative: it states the outcome, so an interrupted or errored turn is
+ * distinguishable from a clean one.
+ *
+ * The older content rule survives as an explicitly `inferred` fallback for turns
+ * that carry no marker (a run killed before the record was flushed): an assistant
+ * record with no `tool_use` part usually means the agent yielded. It is only a
+ * guess — cursor-agent does write text-only records mid-turn — so consumers must
+ * corroborate an `inferred` turn-end before ending a turn on it. The residual
+ * case (a turn that genuinely ends on a `tool_use` with no closing text and no
+ * marker) emits no `turn-end` event at all; callers apply their own timeout or
+ * fallback policy for that.
  *
  * User text is extracted from the `<user_query>…</user_query>` wrapper that
  * cursor-agent injects around the dispatched prompt body. The outer
@@ -56,8 +62,12 @@ export async function snapshotCursor(filePath: string): Promise<FileCursor> {
  *     extracted from the embedded `<timestamp>` tag when present.
  *   - assistant line → emit ONE `{kind:"assistant"}` event (text parts joined
  *     and trimmed, non-empty only); one `{kind:"tool-call"}` per `tool_use`
- *     part; THEN if the line has NO `tool_use` part emit
- *     `{kind:"turn-end", outcome:"completed", signal:"assistant-final-text"}`.
+ *     part; THEN if the line has NO `tool_use` part emit an INFERRED
+ *     `{kind:"turn-end", outcome:"completed", signal:"assistant-final-text",
+ *     confidence:"inferred"}`.
+ *   - `turn_ended` control line → emit an EXPLICIT
+ *     `{kind:"turn-end", signal:"turn_ended", confidence:"explicit"}` whose
+ *     outcome is `completed` for `status:"success"` and `aborted` otherwise.
  *   - malformed / skip lines → nothing (decoder records warnings)
  *
  * `ts` on cursor-decoded lines: `DecodedUserLine` and `DecodedAssistantLine`
@@ -133,14 +143,27 @@ export async function readEventsSince(
         }
       }
 
-      // Turn-end: only if the record has NO tool_use part
+      // Inferred turn-end: the record carries no tool_use part, so the agent
+      // has PROBABLY yielded. Only a guess — cursor-agent also writes text-only
+      // records mid-turn — so it is marked `inferred` and the explicit
+      // `turn_ended` marker below supersedes it whenever one is written.
       if (toolUseParts.length === 0) {
         events.push({
           kind: "turn-end",
           outcome: "completed",
           signal: "assistant-final-text",
+          confidence: "inferred",
         });
       }
+    } else if (decoded.kind === "turn_ended") {
+      // The dialect's own terminal marker: authoritative, and the only cursor
+      // signal that can report a turn ending badly.
+      events.push({
+        kind: "turn-end",
+        outcome: decoded.status === "success" ? "completed" : "aborted",
+        signal: "turn_ended",
+        confidence: "explicit",
+      });
     }
     // malformed / skip → no events emitted (issues already recorded by decodeLine)
   }

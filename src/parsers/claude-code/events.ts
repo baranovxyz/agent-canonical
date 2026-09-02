@@ -83,6 +83,7 @@ const MessageFieldSchema = z.object({
 /** Full line schema — only fields the parser reads. Extra fields are stripped. */
 const RawLineSchema = z.object({
   type: z.string().optional(),
+  subtype: z.string().optional(),
   parentUuid: z.string().nullable().optional(),
   uuid: z.string().optional(),
   sessionId: z.string().optional(),
@@ -92,7 +93,22 @@ const RawLineSchema = z.object({
   version: z.string().optional(),
   timestamp: z.string().optional(),
   isSidechain: z.boolean().optional(),
+  /**
+   * claude-code's own flag for a `user` record it SYNTHESIZED rather than one
+   * the operator typed — the skill-body injection cc appends when a Skill is
+   * loaded (`Base directory for this skill: …`, paired with
+   * `sourceToolUseID`), context caveats, and similar. Decoded so the
+   * turn-scoped event mapper can decline to treat one as a turn boundary; the
+   * session reducer still keeps them.
+   */
+  isMeta: z.boolean().optional(),
   message: MessageFieldSchema.optional(),
+  /**
+   * Outstanding background-`Agent` count on a `system`/
+   * `turn_duration` record. The CLI omits the field entirely once nothing is
+   * outstanding rather than serializing 0.
+   */
+  pendingBackgroundAgentCount: z.number().int().nonnegative().optional(),
 });
 type RawLine = z.infer<typeof RawLineSchema>;
 
@@ -110,6 +126,8 @@ export interface DecodedUserText {
   gitBranch: string | undefined;
   isSidechain: boolean;
   agentId: string | undefined;
+  /** The record carried claude-code's `isMeta` flag — CLI-synthesized, not typed. */
+  isMeta: boolean;
   /** The raw text content. */
   text: string;
 }
@@ -131,6 +149,8 @@ export interface DecodedUserArray {
   gitBranch: string | undefined;
   isSidechain: boolean;
   agentId: string | undefined;
+  /** The record carried claude-code's `isMeta` flag — CLI-synthesized, not typed. */
+  isMeta: boolean;
   textParts: string[];
   toolResults: DecodedToolResult[];
 }
@@ -176,6 +196,9 @@ export interface DecodedAssistant {
   gitBranch: string | undefined;
   isSidechain: boolean;
   agentId: string | undefined;
+  /** The record's own `uuid` — pairs this line with a following ledger record
+   *  whose `parentUuid` matches it. */
+  uuid: string | undefined;
   model: string | undefined;
   messageId: string | undefined;
   usage:
@@ -199,6 +222,22 @@ export interface DecodedSkip {
   lineType: string | undefined;
 }
 
+/**
+ * A `system`/`turn_duration` record — the CLI's own ledger of
+ * outstanding background-`Agent` work, written immediately after the
+ * assistant record it reports on. `parentUuid` pairs it back to that
+ * assistant line's `uuid`; `pendingBackgroundAgentCount` is `undefined` when
+ * the CLI wrote no count (nothing outstanding — the field is omitted, not
+ * serialized as 0).
+ */
+export interface DecodedTurnDuration {
+  kind: "turn_duration";
+  seq: number;
+  ts: number | undefined;
+  parentUuid: string | undefined;
+  pendingBackgroundAgentCount: number | undefined;
+}
+
 /** A line that failed JSON.parse. */
 export interface DecodedMalformed {
   kind: "malformed";
@@ -210,6 +249,7 @@ export type DecodedEvent =
   | DecodedUserArray
   | DecodedUserSkipped
   | DecodedAssistant
+  | DecodedTurnDuration
   | DecodedSkip
   | DecodedMalformed;
 
@@ -297,6 +337,20 @@ export function decodeLine(
   const ts = parseTs(obj.timestamp);
   const lineType = obj.type;
 
+  // The background-agent ledger record. Special-cased ahead of the
+  // generic `system` skip so its `parentUuid` + `pendingBackgroundAgentCount`
+  // survive decoding — the incremental reader pairs it back to the terminal
+  // assistant record it reports on.
+  if (lineType === "system" && obj.subtype === "turn_duration") {
+    return {
+      kind: "turn_duration",
+      seq,
+      ts,
+      parentUuid: obj.parentUuid ?? undefined,
+      pendingBackgroundAgentCount: obj.pendingBackgroundAgentCount,
+    };
+  }
+
   // Bookkeeping types — capture for rawEvents, no message output.
   if (!lineType || SKIP_TYPES.has(lineType)) {
     return { kind: "skip", seq, ts, lineType };
@@ -375,6 +429,7 @@ export function decodeLine(
       seq,
       ts,
       ...meta,
+      uuid: obj.uuid,
       model: msg?.model,
       messageId: msg?.id,
       usage,
@@ -402,6 +457,7 @@ export function decodeLine(
       seq,
       ts,
       ...meta,
+      isMeta: obj.isMeta === true,
       text: content,
     };
   }
@@ -440,6 +496,7 @@ export function decodeLine(
     seq,
     ts,
     ...meta,
+    isMeta: obj.isMeta === true,
     textParts,
     toolResults,
   };

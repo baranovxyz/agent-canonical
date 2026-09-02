@@ -93,8 +93,9 @@ describe("dialect golden facts", () => {
     expect(DIALECTS["claude-code"].turnEnd.description).toContain("end_turn");
     expect(DIALECTS.codex.turnEnd.description).toContain("task_complete");
     expect(DIALECTS.opencode.turnEnd.description).toContain('"tool-calls"');
-    expect(DIALECTS.cursor.turnEnd.kind).toBe("derived");
-    expect(DIALECTS.cursor.capabilities.explicitTurnEnd).toBe(false);
+    expect(DIALECTS.cursor.turnEnd.kind).toBe("explicit");
+    expect(DIALECTS.cursor.turnEnd.description).toContain("turn_ended");
+    expect(DIALECTS.cursor.capabilities.explicitTurnEnd).toBe(true);
     expect(DIALECTS.gemini.turnEnd.kind).toBe("unavailable");
     expect(DIALECTS.gemini.capabilities.explicitTurnEnd).toBe(false);
     expect(DIALECTS.qwen.turnEnd.kind).toBe("unavailable");
@@ -145,7 +146,10 @@ describe("dialect golden facts", () => {
     );
     expect(DIALECTS["claude-code"].turnEnd.abortDescription).toBeUndefined();
     expect(DIALECTS["claude-code"].capabilities.abortSignalOnDisk).toBe(false);
-    expect(DIALECTS.cursor.capabilities.abortSignalOnDisk).toBe(false);
+    // cursor-agent's abort rides on its turn_ended record's status, so unlike
+    // claude-code it CAN name an interrupted turn on disk.
+    expect(DIALECTS.cursor.turnEnd.abortDescription).toContain("turn_ended");
+    expect(DIALECTS.cursor.capabilities.abortSignalOnDisk).toBe(true);
   });
 
   it("pins awaiting capabilities: cc questions only, permission nowhere", () => {

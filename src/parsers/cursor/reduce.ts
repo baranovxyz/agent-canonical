@@ -148,6 +148,18 @@ export function reduceEvents(
       continue;
     }
 
+    if (ev.kind === "turn_ended") {
+      // Control record, not a message: it carries the turn's outcome and no
+      // content. Kept queryable at the raw layer; contributes no message or
+      // part to the assembled session.
+      rawEvents.push({
+        seq: ev.seq,
+        eventType: "cursor:turn_ended",
+        rawJson,
+      });
+      continue;
+    }
+
     const role = ev.kind; // "user" | "assistant"
 
     rawEvents.push({

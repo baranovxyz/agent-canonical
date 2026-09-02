@@ -441,6 +441,43 @@ function parseCustomToolOutput(raw: string): {
 // ---------------------------------------------------------------------------
 
 /**
+ * Codex injects its own bookkeeping record after an interrupt: older captures
+ * use `role: "user"`, while current captures use `role: "developer"`. Both
+ * wrap a `<turn_aborted>…</turn_aborted>` notice immediately before the
+ * `turn_aborted` event that carries the turn-end.
+ *
+ * These are not operator utterances, and treating them as such breaks the
+ * invariant every turn-scoping consumer relies on — that a `user` event marks a
+ * genuine turn boundary. A scan that stops at this notice never reaches the
+ * abort behind it, so an interrupted turn cannot settle and its caller waits out
+ * the full ttl instead (observed against codex 0.141.0).
+ *
+ * Matched structurally on the wrapper tag rather than the prose inside it, which
+ * is advisory text Codex is free to reword.
+ */
+export function isCodexControlNotice(text: string): boolean {
+  return text.trimStart().startsWith("<turn_aborted>");
+}
+
+function messageText(
+  content: z.infer<typeof MessagePayloadSchema>["content"],
+): string {
+  return (content ?? [])
+    .map((part) => (typeof part.text === "string" ? part.text : ""))
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+export function isCodexControlNoticePayload(payload: unknown): boolean {
+  const parsed = MessagePayloadSchema.safeParse(payload);
+  return (
+    parsed.success &&
+    (parsed.data.role === "user" || parsed.data.role === "developer") &&
+    isCodexControlNotice(messageText(parsed.data.content))
+  );
+}
+
+/**
  * Decode one raw JSONL line into a typed DecodedEvent.
  *
  * - Malformed JSON → warn + return skip
@@ -589,11 +626,11 @@ export function decodeLine(
             // developer / system messages intentionally dropped
             return { kind: "skip", ts };
           }
-          const text = (r.data.content ?? [])
-            .map((p) => (typeof p.text === "string" ? p.text : ""))
-            .filter(Boolean)
-            .join("\n\n");
+          const text = messageText(r.data.content);
           if (!text) return { kind: "skip", ts };
+          if (isCodexControlNoticePayload(line.payload)) {
+            return { kind: "skip", ts };
+          }
           return { kind: "response_message", ts, role, text };
         }
 
