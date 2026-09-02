@@ -2,6 +2,12 @@
 
 Notable agent-canonical changes only. Detailed implementation notes belong in commit history.
 
+## 0.4.1 - 2026-09-02
+
+- Rewrite the README: problem/solution framing grounded in the parser and dialect source, a
+  runnable full-parse and incremental-turn-event quick start, a supported-CLI capability table
+  (store kind, full parse, incremental read, turn-end signal), and the subpath exports table.
+
 ## 0.4.0 - 2026-09-02
 
 - Decode cursor-agent's `{"type":"turn_ended","status":…}` control record as the authoritative
